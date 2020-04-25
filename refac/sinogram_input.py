@@ -23,7 +23,7 @@ def dsetpath(dataset):
              'tempall': 'mvs/recon/temp_for_slides/all/',
              'tempno_e': 'mvs/recon/temp_for_slides/no_e/',
              'tempmixed': 'mvs/recon/temp_for_slides/mixed/',
-             'testlocal': '~/Documents/Diamond/CLIC_refac/test_data/'}
+             'testlocal': '/home/lexi/Documents/Diamond/CLIC_refac/test_data/'}
 
     if dataset not in dsets:
         print('ERROR: dset not found')
