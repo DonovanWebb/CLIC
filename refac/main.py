@@ -6,11 +6,11 @@ from clustering import clustering_main
 class Config():
     def __init__(self):
         self.dset = 'testlocal'
-        self.num = 16
-        self.snr = 1
+        self.num = 16*10
+        self.snr = 1000
         self.ds = 1
         self.num_comps = 2
-        self.model = 'TSNE'
+        self.model = 'UMAP'
 
 
 def plot(lines_reddim):
@@ -21,5 +21,5 @@ def plot(lines_reddim):
 
 sinos = sinogram_main(Config())
 lines_reddim = fitmodel(sinos, Config().model, Config().num_comps)
-# plot(lines_reddim)
+plot(lines_reddim)
 clustering_main(lines_reddim, Config())

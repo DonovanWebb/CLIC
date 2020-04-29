@@ -3,6 +3,11 @@ from sklearn.metrics.pairwise import euclidean_distances as eucl_dist
 import matplotlib.pyplot as plt
 
 
+def debug_p(msg):
+    pass
+    # print(msg)
+
+
 def initial_dict(lines, num):
     per_sino = lines.shape[0] // num  # How many single lines per sino
     # Put each line in an initial cluster
@@ -25,20 +30,12 @@ def plot_hist(dists, name):
             plt.bar(center, hist, align='center', width=width)
 
 
-            # plt.figure(name[0]+ name[1]*10)
-            # plt.hist(paired_dists.ravel(), bins=100)
-            # plt.title(name)
-            # plt.figure(0)
-            # plt.hist(paired_dists.ravel(), bins=100)
-
-
 def find_score(clX, clY, name):
     paired_dists = eucl_dist(clX, clY).ravel()
     dists = 1/paired_dists
-    # dists[np.where(dists <= 0.05)] = 0
+    dists[np.where(dists <= 0.05)] = 0
     # plot_hist(dists, name)
     score = np.mean(dists)
-
     return score
 
 
@@ -55,10 +52,6 @@ def find_scoretable(cluster_dict, cluster_labels):
                 clY = cluster_dict[cluster_labels[Y]]
                 scoretable[X, Y] = find_score(clX, clY, (X, Y))
     return scoretable
-
-
-def debug_p(msg):
-    print(msg)
 
 
 def update_scoretable(scoretable, a, b, num_clusters):
@@ -129,14 +122,36 @@ def update_cl(cluster_dict, scoretable, cluster_labels):
     return cluster_dict, scoretable, cluster_labels, paired
 
 
+def print_clusters(num, all_paired):
+    clusters = np.array(list(range(num)))
+
+    for paired in all_paired:
+        s1, s2 = paired
+        c1 = clusters[s1]
+        c2 = clusters[s2]
+
+        # update clusters by merging two
+        if c1 < c2:
+            clusters[clusters == c2] = c1
+        elif c2 < c1:
+            clusters[clusters == c1] = c2
+
+        # Display cluster
+        cl = np.reshape(clusters, (-1, 16))
+    return cl
+
+
 def clustering_main(lines, Config):
     cl_labels = list(range(Config.num))
     print(cl_labels)
     cl_dict = initial_dict(lines, Config.num)
     scoretable = find_scoretable(cl_dict, cl_labels)
+    all_paired = []
     for i in range(Config.num - 1):
         cl_dict, scoretable, cl_labels, paired = update_cl(cl_dict, scoretable,
                                                            cl_labels)
-
         print(paired)
+        all_paired.append(paired)
         print(cl_labels)
+        cl = print_clusters(Config.num, all_paired)
+        print(cl)

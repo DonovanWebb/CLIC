@@ -32,6 +32,10 @@ def fitmodel(sinos, model, num_comps):
     elif model == 'TSNE':
         from sklearn.manifold import TSNE
         model = TSNE(n_components=num_comps)
+    elif model == 'UMAP':
+        import umap
+        model = umap.UMAP(n_neighbors=5, min_dist=0.3,
+                          n_components=num_comps)
 
     start_train = time.time()
     lines = split_sinos(sinos)
