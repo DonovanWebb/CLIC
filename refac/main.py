@@ -6,10 +6,10 @@ from clustering import clustering_main
 class Config():
     def __init__(self):
         self.dset = 'testlocal'
-        self.num = 16*10
+        self.num = 16*40
         self.snr = 1/4
         self.ds = 1
-        self.num_comps = 3
+        self.num_comps = 10
         self.model = 'UMAP'
 
 
@@ -18,9 +18,11 @@ def plot(lines_reddim, num):
     per_sino = lines_reddim.shape[0] // num
     for x in range(num):
         if x % 2 == 0:
-            plt.scatter(lines_reddim[x*per_sino:(x+1)*per_sino, 0], lines_reddim[x*per_sino:(x+1)*per_sino:, 1], c='r')
+            plt.scatter(lines_reddim[x*per_sino:(x+1)*per_sino, 0],
+                        lines_reddim[x*per_sino:(x+1)*per_sino:, 1], c='r')
         else:
-            plt.scatter(lines_reddim[x*per_sino:(x+1)*per_sino, 0], lines_reddim[x*per_sino:(x+1)*per_sino:, 1], c='b')
+            plt.scatter(lines_reddim[x*per_sino:(x+1)*per_sino, 0],
+                        lines_reddim[x*per_sino:(x+1)*per_sino:, 1], c='b')
     plt.show()
 
 
