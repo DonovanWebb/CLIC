@@ -20,7 +20,7 @@ def fitmodel(sinos, model, num_comps):
         from sklearn.decomposition import PCA
         model = PCA(n_components=num_comps)
     # MANIFOLDS
-    elif model == 'Isomap':
+    elif model == 'ISOMAP':
         from sklearn.manifold import Isomap
         model = Isomap(n_components=num_comps)
     elif model == 'LLE':
@@ -36,6 +36,9 @@ def fitmodel(sinos, model, num_comps):
         import umap
         model = umap.UMAP(n_neighbors=5, min_dist=0.3,
                           n_components=num_comps)
+    elif model == 'TRIMAP':
+        import trimap
+        model = trimap.TRIMAP(n_iters=1000)
 
     start_train = time.time()
     lines = split_sinos(sinos)

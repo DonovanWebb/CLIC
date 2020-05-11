@@ -31,11 +31,13 @@ def plot_hist(dists, name):
 
 
 def find_score(clX, clY, name):
-    paired_dists = eucl_dist(clX, clY).ravel()
+    paired_dists = eucl_dist(clX, clY)
+    paired_dists = paired_dists.ravel()
     dists = 1/paired_dists
-    dists[np.where(dists <= 0.05)] = 0
+    #dists[np.where(dists <= 0.05)] = 0
     # plot_hist(dists, name)
     score = np.mean(dists)
+    debug_p(f'Score: {score}')
     return score
 
 
@@ -73,6 +75,8 @@ def update_scoretable(scoretable, a, b, num_clusters):
 
 def update_clusterlabels(cluster_labels, p0, p1):
     ''' remove paired and add lowest as new cl label '''
+    if p0 == p1:
+        print("ERROR, p0=p1")
     cluster_labels.remove(p0)
     cluster_labels.remove(p1)
     cluster_labels.append(p0)
@@ -122,7 +126,8 @@ def update_cl(cluster_dict, scoretable, cluster_labels):
     return cluster_dict, scoretable, cluster_labels, paired
 
 
-def print_clusters(num, all_paired):
+def print_clusters_all(num, all_paired):
+    # takes all paired values to make final clustering
     clusters = np.array(list(range(num)))
 
     for paired in all_paired:
@@ -141,6 +146,31 @@ def print_clusters(num, all_paired):
     return cl
 
 
+def print_clusters(clusters, count, large_merges, paired):
+    # Takes one paired at a time
+    s1, s2 = paired
+    c1 = clusters[s1]
+    c2 = clusters[s2]
+
+    count1 = count[c1]
+    count2 = count[c2]
+    merge_size = min(count1, count2)
+    if merge_size > 3:
+        large_merges.append([c1, c2, count1, count2])
+
+    # update clusters by merging two
+    if c1 < c2:
+        clusters[clusters == c2] = c1
+        count[c1] += count[c2]
+    elif c2 < c1:
+        clusters[clusters == c1] = c2
+        count[c2] += count[c1]
+
+    # Display cluster
+    cl = np.reshape(clusters, (-1, 16))
+    return cl, clusters, count, large_merges
+
+
 def clustering_main(lines, Config):
     cl_labels = list(range(Config.num))
     print(cl_labels)
@@ -153,5 +183,13 @@ def clustering_main(lines, Config):
         print(paired)
         all_paired.append(paired)
         print(cl_labels)
-        cl = print_clusters(Config.num, all_paired)
+        if i == 0:
+            clusters = np.array(list(range(Config.num)))
+            count = {x: 1 for x in range(Config.num)}
+            cl, clusters, count, large_merges = print_clusters(
+                clusters, count, [], paired)
+        else:
+            cl, clusters, count, large_merges = print_clusters(
+                clusters, count, large_merges, paired)
         print(cl)
+    print(large_merges)

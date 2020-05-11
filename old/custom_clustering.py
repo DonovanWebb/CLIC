@@ -18,7 +18,6 @@ How to do these things
 5)) replace paired points with new averaged
 
 '''
-import matplotlib.pyplot as plt
 import numpy as np
 import time
 from numba import jit
@@ -59,57 +58,6 @@ def comp_two_c2(all_dist, l1, l2, c2):
     all_dist[(l1, c2)] = z
     del all_dist[(l2, c2)]
     return z, all_dist
-
-
-############################################
-'''
- OLD. NOT VECTORISED BUT LEFT IN TO COMPARE
-'''
-@jit(nopython=True, parallel=False)
-def eucl_dist(node, nodes):
-    '''
-    input is two (2) and (l_sizex2) arrays
-    output is (l_size) array
-    '''
-    nodes = np.asarray(nodes)
-    dist_2 = np.sum((nodes - node)**2, axis=1)
-    return dist_2
-
-
-@jit(nopython=True, parallel=False)
-def compare2(sino1, sino2):
-    '''
-    input is two (l_sizex2) arrays
-    '''
-    min_dists = []
-    for i in range(sino1.shape[0]):
-        x = sino1[i]
-        dists = eucl_dist(x, sino2)
-        min_dist = np.argmin(dists)
-        min_dists.append(dists[min_dist])
-    return min_dists
-
-
-def first_pass(comp_dict):
-    dists = []
-    comps = []
-    all_dist = {}
-    # insert vect calcs here
-    for i in comp_dict:
-        for j in comp_dict:
-            if i == j:
-                continue
-            dist = compare2(comp_dict[i], comp_dict[j])
-            all_dist[(i, j)] = dist
-            dists.append(eucl_vec.calc_score(dist))
-            comps.append((i, j))
-    return all_dist, dists, comps
-
-
-'''
-END OLD
-'''
-########################################
 
 
 def first_pass_gpu(n, data, ln):
@@ -176,6 +124,7 @@ def find2_pairs(dists, paired, comps, comp_dict):
         del comp_dict[x]
     return comp_dict, paired
 
+
 def find_pairs(dists, paired, comps, comp_dict):
     closest_two_arg = np.argmin(dists)
     # print(dists[closest_two_arg])
@@ -226,7 +175,7 @@ def print_clusters(num, paired):
         c2 = clusters[s2]
         if c1 == c2:
             continue
-        
+
         # Look at if it was a large merge
 
         count1 = count[c1]
