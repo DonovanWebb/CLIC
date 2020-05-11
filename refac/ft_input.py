@@ -1,6 +1,7 @@
 import numpy as np
 from skimage.transform import radon, resize
 import mrcfile
+import cv2
 
 
 def dsetpath(dataset):
@@ -74,12 +75,6 @@ def circular_mask(im):
     return mask*im
 
 
-def make_sinogram(image):
-    theta = np.linspace(0., 180., max(image.shape), endpoint=False)
-    sinogram = radon(image, theta=theta, circle=True)
-    return sinogram.T
-
-
 def find_im_size(path):
     im_path = path + '0.mrc'
     im = load_mrc(im_path)
@@ -87,17 +82,69 @@ def find_im_size(path):
     return im_size
 
 
-def sinogram_main(Config):
+def make_ft(im):
+    f = np.fft.fft2(im)
+    fshift = np.fft.fftshift(f)
+    magnitude_spectrum = np.abs(fshift)
+    phase_spectrum = np.arctan(np.imag(fshift)/np.real(fshift))
+    ft_im = phase_spectrum
+    # import matplotlib.pyplot as plt
+    # plt.imshow(ft_im)
+    # plt.show()
+    return ft_im
+
+
+def make_lines(im):
+    if im.shape[0] % 2 == 0:
+        im = resize(im, (im.shape[0] - 1, im.shape[1] - 1), anti_aliasing=True)
+    max_pix = im.shape[0]
+    lx = max_pix//2
+    theta = np.linspace(0, 2*np.pi, max_pix)
+    line_im = np.zeros((max_pix, max_pix))
+    for i in range(theta.shape[0]):
+        th = theta[i]
+        # Make a line with "num" points...
+        x0, y0 = lx*np.cos(th) + max_pix/2, lx*np.sin(th) + max_pix/2  # These are pixel coordinates
+        x1, y1 = -lx*np.cos(th) + max_pix/2, -lx*np.sin(th) + max_pix/2  # These are pixel coordinates
+        length = max_pix
+        x, y = np.linspace(x0, x1, length), np.linspace(y0, y1, length)
+
+        # Extract the values along the line
+        zi = im[x.astype(np.int), y.astype(np.int)]
+        line_im[i] = zi
+
+        #-- Plot...
+        '''
+        import matplotlib.pyplot as plt
+        fig, axes = plt.subplots(nrows=2)
+        axes[0].imshow(im)
+        axes[0].plot([x0, x1], [y0, y1], 'ro-')
+        axes[0].axis('image')
+
+        axes[1].plot(zi)
+
+        plt.show()
+        '''
+    '''
+    plt.imshow(line_im)
+    plt.show()
+    '''
+    return line_im
+
+
+def ft_main(Config):
     dset_path = dsetpath(Config.dset)
-    ds_size = find_im_size(dset_path) // Config.ds
-    all_sinos = np.zeros((Config.num, ds_size, ds_size))
+    ds_size = find_im_size(dset_path) // Config.ds - 1 # change
+    all_ft = np.zeros((Config.num, ds_size, ds_size))
     for x in range(Config.num):
         im_path = dset_path + f'{x}.mrc'
         im = load_mrc(im_path)
         im = stand_image(im)
         im = add_noise(im, Config.snr)
         im = downscale(im, Config.ds)
-        im = circular_mask(im)
-        sino = make_sinogram(im)
-        all_sinos[x] = sino
-    return all_sinos
+
+        ft_im = make_ft(im)
+        lines = make_lines(ft_im)
+        all_ft[x] = lines
+
+    return all_ft

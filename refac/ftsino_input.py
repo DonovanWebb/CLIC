@@ -39,8 +39,12 @@ def load_mrc(path):
 
 
 def stand_image(image):
-    image_stand = (image - np.mean(image))/np.std(image)
-    return image_stand
+    std = np.std(image)
+    if std == 0:
+        return image
+    else:
+        image_stand = (image - np.mean(image))/std
+        return image_stand
 
 
 def add_noise(image, snr=1):  # Try colored noise and shot noise
@@ -87,10 +91,33 @@ def find_im_size(path):
     return im_size
 
 
-def sinogram_main(Config):
+def ft_line(sino):
+    ft_sino = np.zeros(sino.shape)
+    for i in range(sino.shape[0]):
+        line = sino[i]
+        ft = np.fft.fft(line)
+        # phase = np.arctan(np.imag(ft)/np.real(ft))
+        # magnitude = 100*np.log(np.abs(ft))
+        # magnitude = stand_image(magnitude)
+        ft_sino[i] = np.imag(ft)
+
+    return ft_sino
+
+
+def stand_lines(all_ftsinos):
+    all_ftsinos = np.reshape(all_ftsinos, (-1, all_ftsinos.shape[-1]))
+    all_stand = np.zeros(all_ftsinos.shape)
+    for i in range(all_ftsinos.shape[1]):
+        col = all_ftsinos[:, i]
+        col_stand = stand_image(col)
+        all_stand[:, i] = col_stand
+    return all_stand
+
+
+def ftsino_main(Config):
     dset_path = dsetpath(Config.dset)
     ds_size = find_im_size(dset_path) // Config.ds
-    all_sinos = np.zeros((Config.num, ds_size, ds_size))
+    all_ftsinos = np.zeros((Config.num, ds_size, ds_size))
     for x in range(Config.num):
         im_path = dset_path + f'{x}.mrc'
         im = load_mrc(im_path)
@@ -99,5 +126,8 @@ def sinogram_main(Config):
         im = downscale(im, Config.ds)
         im = circular_mask(im)
         sino = make_sinogram(im)
-        all_sinos[x] = sino
-    return all_sinos
+        ft_sino = ft_line(sino)
+        all_ftsinos[x] = ft_sino
+    #all_ftsinos = stand_lines(all_ftsinos)
+    #all_ftsinos = np.reshape(all_ftsinos, (-1, all_ftsinos.shape[-1]))
+    return all_ftsinos
