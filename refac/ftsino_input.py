@@ -47,6 +47,16 @@ def stand_image(image):
         return image_stand
 
 
+def norm_image(image):
+    minx = np.min(image)
+    maxx = np.max(image)
+    if maxx - minx == 0:
+        return image
+    else:
+        image_norm = (image - minx)/(maxx - minx)
+        return image_norm
+
+
 def add_noise(image, snr=1):  # Try colored noise and shot noise
     ''' Add gaussian noise to data '''
     dims = tuple(image.shape)
@@ -92,14 +102,27 @@ def find_im_size(path):
 
 
 def ft_line(sino):
-    ft_sino = np.zeros(sino.shape)
+    n = sino.shape[0]
+    if n % 2 == 0:
+        ft_len = n//2 + 1
+    else:
+        ft_len = (n+1)//2
+    ft_sino = np.zeros((sino.shape[0], ft_len))
     for i in range(sino.shape[0]):
         line = sino[i]
-        ft = np.fft.fft(line)
+        ft = np.fft.rfft(line)
+        ft[:5] = 0
+        ft[-5:] = 0
         # phase = np.arctan(np.imag(ft)/np.real(ft))
         # magnitude = 100*np.log(np.abs(ft))
         # magnitude = stand_image(magnitude)
-        ft_sino[i] = np.imag(ft)
+        # import matplotlib.pyplot as plt
+        # plt.plot(ft)
+        # plt.show()
+        ft_sino[i] = np.real(ft)
+    # import matplotlib.pyplot as plt
+    # plt.imshow(ft_sino)
+    # plt.show()
 
     return ft_sino
 
@@ -109,15 +132,22 @@ def stand_lines(all_ftsinos):
     all_stand = np.zeros(all_ftsinos.shape)
     for i in range(all_ftsinos.shape[1]):
         col = all_ftsinos[:, i]
-        col_stand = stand_image(col)
+        col_stand = norm_image(col)
         all_stand[:, i] = col_stand
+
+    # import matplotlib.pyplot as plt
+    # for l in range(all_ftsinos.shape[0]):
+    #     line = all_stand[l]
+    #     plt.plot(line)
+    #     plt.show()
+
     return all_stand
 
 
 def ftsino_main(Config):
     dset_path = dsetpath(Config.dset)
     ds_size = find_im_size(dset_path) // Config.ds
-    all_ftsinos = np.zeros((Config.num, ds_size, ds_size))
+    all_ftsinos = np.zeros((Config.num, ds_size, 76))
     for x in range(Config.num):
         im_path = dset_path + f'{x}.mrc'
         im = load_mrc(im_path)
@@ -128,6 +158,5 @@ def ftsino_main(Config):
         sino = make_sinogram(im)
         ft_sino = ft_line(sino)
         all_ftsinos[x] = ft_sino
-    #all_ftsinos = stand_lines(all_ftsinos)
-    #all_ftsinos = np.reshape(all_ftsinos, (-1, all_ftsinos.shape[-1]))
+    all_ftsinos = stand_lines(all_ftsinos)
     return all_ftsinos

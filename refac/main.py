@@ -6,10 +6,10 @@ from clustering import clustering_main
 class Config():
     def __init__(self):
         self.dset = 'testlocal'
-        self.num = 16*1
+        self.num = 16*4
         self.snr = 1
         self.ds = 1
-        self.num_comps = 10
+        self.num_comps = 3
         self.model = 'UMAP'
 
 
