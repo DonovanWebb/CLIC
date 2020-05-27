@@ -5,8 +5,8 @@ import mrcfile
 
 def dsetpath(dataset):
     ''' return path to dataset '''
-    # path_head = '/dls/ebic/data/staff-scratch/Donovan/'
-    path_head = ''
+    path_head = '/dls/ebic/data/staff-scratch/Donovan/'
+    # path_head = ''
 
     dsets = {'NN': '3Drepro/Radon/NN/proj_5angles/all/',
              'all': 'mvs/protein/all/',
@@ -23,7 +23,17 @@ def dsetpath(dataset):
              'tempall': 'mvs/recon/temp_for_slides/all/',
              'tempno_e': 'mvs/recon/temp_for_slides/no_e/',
              'tempmixed': 'mvs/recon/temp_for_slides/mixed/',
-             'testlocal': '/home/lexi/Documents/Diamond/CLIC_refac/test_data/mixed/'}
+             'testlocal': '/home/lexi/Documents/Diamond/CLIC_refac/test_data/mixed/',
+             'JFrank': 'CLIC/dsets/simulated/JFrank/particles/',
+             'JFrank1': 'CLIC/dsets/simulated/JFrank/particles1/',
+             'JFrank2': 'CLIC/dsets/simulated/JFrank/particles2/',
+             'JFrank3': 'CLIC/dsets/simulated/JFrank/particles3/',
+             'JFrankd23': 'CLIC/dsets/simulated/JFrank/particlesd23/',
+             'JFrankd41k': 'CLIC/dsets/simulated/JFrank/particlesd41k/',
+             'fact': 'CLIC/dsets/real/fact/',
+             'factmixed': 'CLIC/dsets/real/factmixed/',
+             'exp_plan': 'CLIC/dsets/exp_plan/7_5_projs/'}
+
 
     if dataset not in dsets:
         print('ERROR: dset not found')
@@ -34,7 +44,7 @@ def dsetpath(dataset):
 
 def load_mrc(path):
     with mrcfile.open(path) as f:
-        image = f.data.T
+        image = f.data
     return image
 
 
@@ -74,8 +84,8 @@ def circular_mask(im):
     return mask*im
 
 
-def make_sinogram(image):
-    theta = np.linspace(0., 180., max(image.shape), endpoint=False)
+def make_sinogram(image, nlines=120):
+    theta = np.linspace(0., 360., nlines, endpoint=False)
     sinogram = radon(image, theta=theta, circle=True)
     return sinogram.T
 
@@ -86,18 +96,46 @@ def find_im_size(path):
     im_size = im.shape[0]
     return im_size
 
+def gblur(im):
+    import cv2
+    kernel = 5
+    im = cv2.GaussianBlur(im, (kernel, kernel),0)
+    return im
+
 
 def sinogram_main(Config):
     dset_path = dsetpath(Config.dset)
+    nlines = 120
     ds_size = find_im_size(dset_path) // Config.ds
-    all_sinos = np.zeros((Config.num, ds_size, ds_size))
+    all_sinos = np.zeros((Config.num, nlines, ds_size))
     for x in range(Config.num):
         im_path = dset_path + f'{x}.mrc'
         im = load_mrc(im_path)
         im = stand_image(im)
         im = add_noise(im, Config.snr)
+        # im = gblur(im)
         im = downscale(im, Config.ds)
+        '''
+        import matplotlib.pyplot as plt
+        plt.figure(11)
+        plt.imshow(im, cmap='gray')
+        plt.show()
+        '''
+
         im = circular_mask(im)
-        sino = make_sinogram(im)
+
+        '''
+        plt.figure(12)
+        plt.imshow(im, cmap='gray')
+        '''
+        
+        sino = make_sinogram(im, nlines)
+
+        '''
+        plt.figure(13)
+        plt.imshow(sino, cmap='gray')
+        plt.show()
+        '''
+
         all_sinos[x] = sino
     return all_sinos

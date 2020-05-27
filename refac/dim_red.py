@@ -10,7 +10,7 @@ def comp_var(sinos_trans):
 
 
 def split_sinos(sinos):
-    lines = np.reshape(sinos, (-1, sinos.shape[1]))
+    lines = np.reshape(sinos, (-1, sinos.shape[2]))
     return lines
 
 

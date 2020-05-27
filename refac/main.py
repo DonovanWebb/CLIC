@@ -1,15 +1,16 @@
 from sinogram_input import sinogram_main
 from dim_red import fitmodel
 from clustering import clustering_main
+import plt_truth
 
 
 class Config():
     def __init__(self):
-        self.dset = 'testlocal'
-        self.num = 16*4
+        self.dset = 'exp_plan'
+        self.num = 16*20  #43
         self.snr = 1
-        self.ds = 1
-        self.num_comps = 3
+        self.ds = 4
+        self.num_comps = 2
         self.model = 'UMAP'
 
 
@@ -35,11 +36,15 @@ def plot(lines_reddim, num):
     plt.show()
 
 
-from ft_input import ft_main
+# from ft_input import ft_main
 # all_ims = ft_main(Config())
-from ftsino_input import ftsino_main
-all_ims = ftsino_main(Config())
-# all_ims = sinogram_main(Config())
+# from ftsino_input import ftsino_main
+# all_ims = ftsino_main(Config())
+all_ims = sinogram_main(Config())
+
 lines_reddim = fitmodel(all_ims, Config().model, Config().num_comps)
-plot(lines_reddim, Config().num)
+import numpy as np
+# lines_reddim = np.reshape(all_ims,(-1,all_ims.shape[-1]))
+# plot(lines_reddim, Config().num)
+plt_truth.plot(lines_reddim, Config().num, Config().num_comps)
 clustering_main(lines_reddim, Config())

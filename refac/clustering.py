@@ -171,12 +171,24 @@ def print_clusters(clusters, count, large_merges, paired):
     return cl, clusters, count, large_merges
 
 
+def cluster_score(cl):
+    ''' Given groundtruth dset of 0101010101, what is accuracy '''
+    gt = np.array([0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1])
+    score = 0
+    for row in cl:
+        for i in range(row.shape[0]):
+            if row[i] != gt[i] and row[i] != gt[i]+2:
+                score += 1
+    return score
+
+
 def clustering_main(lines, Config):
     cl_labels = list(range(Config.num))
     print(cl_labels)
     cl_dict = initial_dict(lines, Config.num)
     scoretable = find_scoretable(cl_dict, cl_labels)
     all_paired = []
+    all_cl_score = []
     for i in range(Config.num - 1):
         cl_dict, scoretable, cl_labels, paired = update_cl(cl_dict, scoretable,
                                                            cl_labels)
@@ -192,4 +204,9 @@ def clustering_main(lines, Config):
             cl, clusters, count, large_merges = print_clusters(
                 clusters, count, large_merges, paired)
         print(cl)
+        # append to txt file
+        cl_score = cluster_score(cl)
+        print(cl_score)
+        all_cl_score.append(cl_score)
     print(large_merges)
+    print(np.min(all_cl_score))
