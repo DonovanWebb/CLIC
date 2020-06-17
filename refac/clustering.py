@@ -1,3 +1,24 @@
+"""
+input: dimensionally reduced lines
+output: stepwise clustering of sinograms
+
+Initially each sinogram is one cluster, so we have clusters C1, C2, C3 ... CN,
+where N is num of projections.
+
+A score is made for each pair of clusters by finding euclidian distance between
+lines contained within each group.
+
+Lowest scoring cluster pair is merged and the new larger cluster is named after
+the smaller cluster number of the merging clusters. i.e. if C4 and C7 merge
+they will now all be contained in C4.
+
+This iterates until all points are contained within one cluster - C1.
+
+At each merging we get an output of which cluster each sinogram belongs to.
+Large merges are points of interest and so this is printed at the end of the
+program.
+The clusters prior to a large merge should be analysed further.
+"""
 import numpy as np
 from sklearn.metrics.pairwise import euclidean_distances as eucl_dist
 import matplotlib.pyplot as plt
@@ -9,6 +30,8 @@ def debug_p(msg):
 
 
 def initial_dict(lines, num):
+    ''' make dictionary of initial classes i.e. which sinogram each line
+    belongs to '''
     per_sino = lines.shape[0] // num  # How many single lines per sino
     # Put each line in an initial cluster
     cluster_dict = {i: lines[per_sino*i:per_sino*(i+1)] for i in range(num)}
@@ -31,6 +54,7 @@ def plot_hist(dists, name):
 
 
 def find_score(clX, clY, name):
+    ''' find score between two clusters '''
     paired_dists = eucl_dist(clX, clY)
     paired_dists = paired_dists.ravel()
     dists = 1/paired_dists
@@ -42,6 +66,15 @@ def find_score(clX, clY, name):
 
 
 def find_scoretable(cluster_dict, cluster_labels):
+    ''' All scores between all pairs of clusters, looks like:
+
+       | C1 | C2 | C3 | C4 |
+    C1 | XX | .. | .. | .. |
+    C2 | .. | XX | .. | .. |
+    C3 | .. | .. | XX | .. |
+    C4 | .. | .. | .. | XX |
+
+    ''' 
     num_clusters = len(cluster_labels)
     scoretable = np.zeros((num_clusters, num_clusters))
     for X in range(num_clusters):
@@ -167,7 +200,7 @@ def print_clusters(clusters, count, large_merges, paired):
         count[c2] += count[c1]
 
     # Display cluster
-    cl = np.reshape(clusters, (-1, 16))
+    cl = np.reshape(clusters, (-1, 16))  # for good displaying and for cluster_score
     return cl, clusters, count, large_merges
 
 

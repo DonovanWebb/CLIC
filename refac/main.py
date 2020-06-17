@@ -1,3 +1,12 @@
+'''
+Main file for CLIC algorithm.
+Config options can be set at the top and the jobs to be run can be seen at the
+bottom of the file.
+
+Results are clustering of sinograms - grouping of sinograms can be seen
+iteratively in the output stream. At the end the large merges will be
+displayed.
+'''
 from sinogram_input import sinogram_main
 from dim_red import fitmodel
 from clustering import clustering_main
@@ -8,15 +17,33 @@ import sin_guesser
 
 class Config():
     def __init__(self):
+
+	''' Dataset to be considered for clustering. To see all options and
+        format needed refer to sinogram_input.py script '''
         self.dset = 'exp_plan'
+      
+	''' Number of projections to consider. A multiple of 16 is used as this
+        makes displaying output cleaner and for easy scoring of a two class system.
+        (TODO A few functions will need to change to accomodate arbitary number)'''
         self.num = 16*10  #43
+
+        ''' Signal to noise ratio of projection before making sinograms '''
         self.snr = 1/(2**0)
+
+        ''' Downscaling of image prior to making sinograms '''
         self.ds = 4
+
+        ''' Number of components of dimensional reduction technique '''
         self.num_comps = 3
+
+        ''' Dimensional reduction technique.
+        options are: PCA, UMAP, TSNE, LLE, ISOMAP, MDS, TRIMAP '''
         self.model = 'UMAP'
 
 
 def plot(lines_reddim, num):
+    ''' Simple plotting of dimensionally reduced lines. Set up for dset with
+    two classes (alternating) '''
     import matplotlib.pyplot as plt
     per_sino = lines_reddim.shape[0] // num
     plt.figure(1)
@@ -39,21 +66,14 @@ def plot(lines_reddim, num):
 
 
 '''
-def rand_stats(lines):
-    import numpy as np
-    """ stats from randomly chosen lines """
-    n = lines.shape[0]
-    n_rand = 100
-    rand = np.random.randint(n, size=n_rand)
-    r_lines = lines[rand]
-    print("random stats")
-    plt_truth.get_stats(r_lines)
+"""
+Optional code - for Fourier lines instead of real space sinogram lines
+"""
+from ft_input import ft_main
+all_ims = ft_main(Config())
+from ftsino_input import ftsino_main
+all_ims = ftsino_main(Config())
 '''
-
-# from ft_input import ft_main
-# all_ims = ft_main(Config())
-# from ftsino_input import ftsino_main
-# all_ims = ftsino_main(Config())
 
 import numpy as np
 all_ims = sinogram_main(Config())
@@ -61,6 +81,9 @@ lines_reddim = fitmodel(all_ims, Config().model, Config().num_comps)
 plot(lines_reddim, Config().num)
 
 '''
+"""
+Optional code - for experiment looking at how common line group spreads with noise
+"""
 r_lines = discrete.rand_lines(lines_reddim, n_rand=100)
 discrete.get_stats(r_lines)
 # r = 17.5

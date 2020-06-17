@@ -1,3 +1,9 @@
+"""
+input: Config from main.py
+output: matrix containing sinograms from given dataset
+
+This script loads projections, adds noise, masks, makes sinograms
+"""
 import numpy as np
 from skimage.transform import radon, resize
 import mrcfile
@@ -97,6 +103,7 @@ def find_im_size(path):
     return im_size
 
 def gblur(im):
+    ''' Adds gaussian blur to projection '''
     import cv2
     kernel = 5
     im = cv2.GaussianBlur(im, (kernel, kernel),0)
@@ -105,7 +112,7 @@ def gblur(im):
 
 def sinogram_main(Config):
     dset_path = dsetpath(Config.dset)
-    nlines = 120
+    nlines = 120  # Number of single lines in sinogram (120 will be 3 degree interval)
     ds_size = find_im_size(dset_path) // Config.ds
     all_sinos = np.zeros((Config.num, nlines, ds_size))
     for x in range(Config.num):
