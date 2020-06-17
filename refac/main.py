@@ -2,15 +2,17 @@ from sinogram_input import sinogram_main
 from dim_red import fitmodel
 from clustering import clustering_main
 import plt_truth
+import discrete
+import sin_guesser
 
 
 class Config():
     def __init__(self):
         self.dset = 'exp_plan'
-        self.num = 16*20  #43
-        self.snr = 1
+        self.num = 16*10  #43
+        self.snr = 1/(2**0)
         self.ds = 4
-        self.num_comps = 2
+        self.num_comps = 3
         self.model = 'UMAP'
 
 
@@ -36,15 +38,39 @@ def plot(lines_reddim, num):
     plt.show()
 
 
+'''
+def rand_stats(lines):
+    import numpy as np
+    """ stats from randomly chosen lines """
+    n = lines.shape[0]
+    n_rand = 100
+    rand = np.random.randint(n, size=n_rand)
+    r_lines = lines[rand]
+    print("random stats")
+    plt_truth.get_stats(r_lines)
+'''
+
 # from ft_input import ft_main
 # all_ims = ft_main(Config())
 # from ftsino_input import ftsino_main
 # all_ims = ftsino_main(Config())
-all_ims = sinogram_main(Config())
 
-lines_reddim = fitmodel(all_ims, Config().model, Config().num_comps)
 import numpy as np
-# lines_reddim = np.reshape(all_ims,(-1,all_ims.shape[-1]))
-# plot(lines_reddim, Config().num)
-plt_truth.plot(lines_reddim, Config().num, Config().num_comps)
+all_ims = sinogram_main(Config())
+lines_reddim = fitmodel(all_ims, Config().model, Config().num_comps)
+plot(lines_reddim, Config().num)
+
+'''
+r_lines = discrete.rand_lines(lines_reddim, n_rand=100)
+discrete.get_stats(r_lines)
+# r = 17.5
+all_groups = sin_guesser.main(Config().num, r)
+theta = 3
+th_lines = sin_guesser.choose_rand_group(all_groups)
+
+group_lines = discrete.get_discrete_lines(lines_reddim, th_lines, r, theta)
+discrete.get_stats(group_lines)
+discrete.plot(group_lines, lines_reddim)
+'''
+
 clustering_main(lines_reddim, Config())
