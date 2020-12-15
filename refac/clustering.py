@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.metrics.pairwise import euclidean_distances as eucl_dist
 import matplotlib.pyplot as plt
+from scipy.cluster.hierarchy import dendrogram
 
 
 def debug_p(msg):
@@ -98,8 +99,9 @@ def update_scores(cluster_dict, p0, num_clusters, cluster_labels, scoretable):
     return scoretable
 
 
-def update_cl(cluster_dict, scoretable, cluster_labels):
-    a, b = np.where(scoretable == np.max(scoretable))
+def update_cl(cluster_dict, scoretable, cluster_labels, Z, Z_corr):
+    score = np.max(scoretable)
+    a, b = np.where(scoretable == score)
     if len(a) > 1:  # only take one entry
         a = a[0]
         b = b[0]
@@ -123,7 +125,12 @@ def update_cl(cluster_dict, scoretable, cluster_labels):
                                cluster_labels, scoretable)
 
     debug_p(f'{(scoretable*100).astype(int)}')
-    return cluster_dict, scoretable, cluster_labels, paired
+
+    # Dendrogram update
+    Z.append([Z_corr[p0], Z_corr[p1], 1/score, 0])
+    Z_corr[p0] = np.max(Z_corr) + 1
+
+    return cluster_dict, scoretable, cluster_labels, paired, Z, Z_corr
 
 
 def print_clusters_all(num, all_paired):
@@ -142,7 +149,8 @@ def print_clusters_all(num, all_paired):
             clusters[clusters == c1] = c2
 
         # Display cluster
-        cl = np.reshape(clusters, (-1, 16))
+        # cl = np.reshape(clusters, (-1, 16))
+        cl = np.reshape(clusters, (-1, 10))
     return cl
 
 
@@ -167,7 +175,8 @@ def print_clusters(clusters, count, large_merges, paired):
         count[c2] += count[c1]
 
     # Display cluster
-    cl = np.reshape(clusters, (-1, 16))
+    # cl = np.reshape(clusters, (-1, 16))
+    cl = np.reshape(clusters, (-1, 10))
     return cl, clusters, count, large_merges
 
 
@@ -177,13 +186,15 @@ def clustering_main(lines, Config):
     cl_dict = initial_dict(lines, Config.num)
     scoretable = find_scoretable(cl_dict, cl_labels)
     all_paired = []
+    Z = []  # Linkage matrix for drawing dendrogram
+    Z_corr = list(range(Config.num))
     for i in range(Config.num - 1):
-        cl_dict, scoretable, cl_labels, paired = update_cl(cl_dict, scoretable,
-                                                           cl_labels)
-        print(paired)
+        cl_dict, scoretable, cl_labels, paired, Z, Z_corr = update_cl(cl_dict, scoretable,
+                                                                      cl_labels, Z, Z_corr)
+        print(paired)  # To see which are paired
         all_paired.append(paired)
-        print(cl_labels)
-        if i == 0:
+        print(cl_labels)  # To see current clusters
+        if i == 0:  # First pass
             clusters = np.array(list(range(Config.num)))
             count = {x: 1 for x in range(Config.num)}
             cl, clusters, count, large_merges = print_clusters(
@@ -191,5 +202,9 @@ def clustering_main(lines, Config):
         else:
             cl, clusters, count, large_merges = print_clusters(
                 clusters, count, large_merges, paired)
-        print(cl)
+        print(cl)  # To see which assignment to clusters
     print(large_merges)
+
+    fig = plt.figure(figsize=(25, 10))
+    dn = dendrogram(Z)
+    plt.show()

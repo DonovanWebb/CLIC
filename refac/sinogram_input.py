@@ -23,7 +23,8 @@ def dsetpath(dataset):
              'tempall': 'mvs/recon/temp_for_slides/all/',
              'tempno_e': 'mvs/recon/temp_for_slides/no_e/',
              'tempmixed': 'mvs/recon/temp_for_slides/mixed/',
-             'testlocal': '/home/lexi/Documents/Diamond/CLIC_refac/test_data/mixed/'}
+             'testlocal': '/home/lexi/Documents/Diamond/CLIC/CLIC_refac/test_data/mixed/',
+             'SLICEM': '/home/lexi/Documents/Diamond/CLIC/CLIC_exp/SLICEM_exp/mixture_2D.mrcs'}
 
     if dataset not in dsets:
         print('ERROR: dset not found')
@@ -40,6 +41,7 @@ def load_mrc(path):
 
 def stand_image(image):
     image_stand = (image - np.mean(image))/np.std(image)
+
     return image_stand
 
 
@@ -75,7 +77,7 @@ def circular_mask(im):
 
 
 def make_sinogram(image):
-    theta = np.linspace(0., 180., max(image.shape), endpoint=False)
+    theta = np.linspace(0., 180*2., max(image.shape), endpoint=False)
     sinogram = radon(image, theta=theta, circle=True)
     return sinogram.T
 
@@ -89,15 +91,53 @@ def find_im_size(path):
 
 def sinogram_main(Config):
     dset_path = dsetpath(Config.dset)
-    ds_size = find_im_size(dset_path) // Config.ds
-    all_sinos = np.zeros((Config.num, ds_size, ds_size))
-    for x in range(Config.num):
-        im_path = dset_path + f'{x}.mrc'
-        im = load_mrc(im_path)
-        im = stand_image(im)
-        im = add_noise(im, Config.snr)
-        im = downscale(im, Config.ds)
-        im = circular_mask(im)
-        sino = make_sinogram(im)
-        all_sinos[x] = sino
-    return all_sinos
+
+    # CLEAN
+    if dset_path.endswith('.mrcs'):
+        ''' Open mrcs class file '''
+        first_pass = True
+        with mrcfile.open(dset_path) as f:
+            classes = f.data
+        for x in range(Config.num):
+            im = classes[x]
+            if first_pass:
+                ds_size = im.shape[0] // Config.ds
+                all_sinos = np.zeros((Config.num, ds_size, ds_size))
+                first_pass = False
+            # im = stand_image(im)
+            # im = add_noise(im, Config.snr)
+            im = downscale(im, Config.ds)
+            im = stand_image(im)
+            im = circular_mask(im)
+            sino = make_sinogram(im)
+            all_sinos[x] = sino
+        return all_sinos
+        
+    else:
+        ''' Open individual particle images (numbered 1->N) '''
+        first_pass = True
+        for x in range(Config.num):
+            im_path = dset_path + f'{x}.mrc'
+            im = load_mrc(im_path)
+            if first_pass:
+                ds_size = im.shape[0] // Config.ds
+                all_sinos = np.zeros((Config.num, ds_size, ds_size))
+                first_pass = False
+            im = stand_image(im)
+            im = add_noise(im, Config.snr)
+            '''
+            import matplotlib.pyplot as plt
+            plt.imshow(im, cmap='gray')
+            plt.show()
+            '''
+            im = downscale(im, Config.ds)
+            im = stand_image(im)
+            im = circular_mask(im)
+            sino = make_sinogram(im)
+            '''
+            import matplotlib.pyplot as plt
+            plt.imshow(sino, cmap='gray')
+            plt.show()
+            '''
+            all_sinos[x] = sino
+        return all_sinos
