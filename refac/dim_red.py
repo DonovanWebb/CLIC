@@ -1,8 +1,15 @@
+"""
+input: sinograms matrix (N, nlines, line)  and config file
+output: reduced dimension sinogram matrix (N, nlines, num_comps)
+
+reduces dimensions of all single lines by some dim red method
+"""
 import numpy as np
 import time
 
 
 def comp_var(sinos_trans):
+    ''' get variance of each component '''
     comp_vects = []
     for x in sinos_trans.T:
         comp_vects.append(np.var(x))
@@ -10,7 +17,7 @@ def comp_var(sinos_trans):
 
 
 def split_sinos(sinos):
-    lines = np.reshape(sinos, (-1, sinos.shape[1]))
+    lines = np.reshape(sinos, (-1, sinos.shape[2]))
     return lines
 
 

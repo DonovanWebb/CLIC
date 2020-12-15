@@ -1,3 +1,9 @@
+"""
+input: Config from main.py
+output: matrix containing sinograms from given dataset
+
+This script loads projections, adds noise, masks, makes sinograms
+"""
 import numpy as np
 from skimage.transform import radon, resize
 import mrcfile
@@ -5,8 +11,8 @@ import mrcfile
 
 def dsetpath(dataset):
     ''' return path to dataset '''
-    # path_head = '/dls/ebic/data/staff-scratch/Donovan/'
-    path_head = ''
+    path_head = '/dls/ebic/data/staff-scratch/Donovan/'
+    # path_head = ''
 
     dsets = {'NN': '3Drepro/Radon/NN/proj_5angles/all/',
              'all': 'mvs/protein/all/',
@@ -24,7 +30,16 @@ def dsetpath(dataset):
              'tempno_e': 'mvs/recon/temp_for_slides/no_e/',
              'tempmixed': 'mvs/recon/temp_for_slides/mixed/',
              'testlocal': '/home/lexi/Documents/Diamond/CLIC/CLIC_refac/test_data/mixed/',
-             'SLICEM': '/home/lexi/Documents/Diamond/CLIC/CLIC_exp/SLICEM_exp/mixture_2D.mrcs'}
+             'SLICEM': '/home/lexi/Documents/Diamond/CLIC/CLIC_exp/SLICEM_exp/mixture_2D.mrcs',
+             'JFrank': 'CLIC/dsets/simulated/JFrank/particles/',
+             'JFrank1': 'CLIC/dsets/simulated/JFrank/particles1/',
+             'JFrank2': 'CLIC/dsets/simulated/JFrank/particles2/',
+             'JFrank3': 'CLIC/dsets/simulated/JFrank/particles3/',
+             'JFrankd23': 'CLIC/dsets/simulated/JFrank/particlesd23/',
+             'JFrankd41k': 'CLIC/dsets/simulated/JFrank/particlesd41k/',
+             'fact': 'CLIC/dsets/real/fact/',
+             'factmixed': 'CLIC/dsets/real/factmixed/',
+             'exp_plan': 'CLIC/dsets/exp_plan/7_5_projs/'}
 
     if dataset not in dsets:
         print('ERROR: dset not found')
@@ -35,7 +50,7 @@ def dsetpath(dataset):
 
 def load_mrc(path):
     with mrcfile.open(path) as f:
-        image = f.data.T
+        image = f.data
     return image
 
 
@@ -76,8 +91,8 @@ def circular_mask(im):
     return mask*im
 
 
-def make_sinogram(image):
-    theta = np.linspace(0., 180*2., max(image.shape), endpoint=False)
+def make_sinogram(image, nlines=120):
+    theta = np.linspace(0., 360., nlines, endpoint=False)
     sinogram = radon(image, theta=theta, circle=True)
     return sinogram.T
 
@@ -88,9 +103,17 @@ def find_im_size(path):
     im_size = im.shape[0]
     return im_size
 
+def gblur(im):
+    ''' Adds gaussian blur to projection '''
+    import cv2
+    kernel = 5
+    im = cv2.GaussianBlur(im, (kernel, kernel),0)
+    return im
+
 
 def sinogram_main(Config):
     dset_path = dsetpath(Config.dset)
+    nlines = 120  # Number of single lines in sinogram (120 will be 3 degree interval)
 
     # CLEAN
     if dset_path.endswith('.mrcs'):
@@ -102,7 +125,7 @@ def sinogram_main(Config):
             im = classes[x]
             if first_pass:
                 ds_size = im.shape[0] // Config.ds
-                all_sinos = np.zeros((Config.num, ds_size, ds_size))
+                all_sinos = np.zeros((Config.num, nlines, ds_size))
                 first_pass = False
             # im = stand_image(im)
             # im = add_noise(im, Config.snr)
@@ -112,7 +135,7 @@ def sinogram_main(Config):
             sino = make_sinogram(im)
             all_sinos[x] = sino
         return all_sinos
-        
+
     else:
         ''' Open individual particle images (numbered 1->N) '''
         first_pass = True
@@ -121,23 +144,26 @@ def sinogram_main(Config):
             im = load_mrc(im_path)
             if first_pass:
                 ds_size = im.shape[0] // Config.ds
-                all_sinos = np.zeros((Config.num, ds_size, ds_size))
+                all_sinos = np.zeros((Config.num, nlines, ds_size))
                 first_pass = False
             im = stand_image(im)
             im = add_noise(im, Config.snr)
+
             '''
             import matplotlib.pyplot as plt
             plt.imshow(im, cmap='gray')
             plt.show()
             '''
+
             im = downscale(im, Config.ds)
-            im = stand_image(im)
             im = circular_mask(im)
             sino = make_sinogram(im)
+
             '''
             import matplotlib.pyplot as plt
             plt.imshow(sino, cmap='gray')
             plt.show()
             '''
+
             all_sinos[x] = sino
         return all_sinos
