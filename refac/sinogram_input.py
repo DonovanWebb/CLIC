@@ -11,8 +11,8 @@ import mrcfile
 
 def dsetpath(dataset):
     ''' return path to dataset '''
-    path_head = '/dls/ebic/data/staff-scratch/Donovan/'
-    # path_head = ''
+    # path_head = '/dls/ebic/data/staff-scratch/Donovan/'
+    path_head = ''
 
     dsets = {'NN': '3Drepro/Radon/NN/proj_5angles/all/',
              'all': 'mvs/protein/all/',
@@ -132,7 +132,7 @@ def sinogram_main(Config):
             im = downscale(im, Config.ds)
             im = stand_image(im)
             im = circular_mask(im)
-            sino = make_sinogram(im)
+            sino = make_sinogram(im, nlines)
             all_sinos[x] = sino
         return all_sinos
 
@@ -157,7 +157,7 @@ def sinogram_main(Config):
 
             im = downscale(im, Config.ds)
             im = circular_mask(im)
-            sino = make_sinogram(im)
+            sino = make_sinogram(im, nlines)
 
             '''
             import matplotlib.pyplot as plt

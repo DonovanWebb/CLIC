@@ -257,4 +257,12 @@ def clustering_main(lines, Config):
 
     fig = plt.figure(figsize=(25, 10))
     dn = dendrogram(Z)
+    # Add color to dendro
+    colors = ['r', 'b', 'g', 'yellow', 'purple', 'brown']
+    ax = plt.gca()
+    xlbls = ax.get_xmajorticklabels()
+    for lbl in xlbls:
+        for x in range(4):
+            if lbl % 4 == x:
+                lbl.set_color(colors[x])
     plt.show()
