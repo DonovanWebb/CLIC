@@ -263,6 +263,6 @@ def clustering_main(lines, Config):
     xlbls = ax.get_xmajorticklabels()
     for lbl in xlbls:
         for x in range(4):
-            if lbl % 4 == x:
-                lbl.set_color(colors[x])
+            if int(lbl.get_text()) % 4 == x:
+                lbl.set_color(colors[int(x)])
     plt.show()
