@@ -9,44 +9,36 @@ from skimage.transform import radon, resize
 import mrcfile
 
 
-def dsetpath(dataset):
-    ''' return path to dataset '''
-    # path_head = '/dls/ebic/data/staff-scratch/Donovan/'
-    path_head = ''
-
-    dsets = {'NN': '3Drepro/Radon/NN/proj_5angles/all/',
-             'all': 'mvs/protein/all/',
-             'noise': 'mvs/protein/all_noise/',
-             'no e': 'mvs/protein/no_e/',
-             'mixed': 'mvs/protein/mixed/',
-             'mixed4': 'mvs/protein/mixed4/',
-             'mixedLarge': 'mvs/protein/mixedLarge/',
-             'mixedOff1': 'mvs/protein/offset/off1/',
-             'mixedOff2': 'mvs/protein/offset/off2/',
-             'mixedOff4': 'mvs/protein/offset/off4/',
-             'mixedOff8': 'mvs/protein/offset/off8/',
-             'ctfcor': 'mvs/protein/CTFYuriy/ctf_corrected/separated/',
-             'tempall': 'mvs/recon/temp_for_slides/all/',
-             'tempno_e': 'mvs/recon/temp_for_slides/no_e/',
-             'tempmixed': 'mvs/recon/temp_for_slides/mixed/',
-             'testlocal': '/home/lexi/Documents/Diamond/CLIC/CLIC_refac/test_data/mixed/',
-             'SLICEM': '/home/lexi/Documents/Diamond/CLIC/CLIC_exp/SLICEM_exp/mixture_2D.mrcs',
-             'exp_local': '/home/lexi/Documents/Diamond/CLIC/CLIC_refac/exp_plan/7_5_projs/',
-             'JFrank': 'CLIC/dsets/simulated/JFrank/particles/',
-             'JFrank1': 'CLIC/dsets/simulated/JFrank/particles1/',
-             'JFrank2': 'CLIC/dsets/simulated/JFrank/particles2/',
-             'JFrank3': 'CLIC/dsets/simulated/JFrank/particles3/',
-             'JFrankd23': 'CLIC/dsets/simulated/JFrank/particlesd23/',
-             'JFrankd41k': 'CLIC/dsets/simulated/JFrank/particlesd41k/',
-             'fact': 'CLIC/dsets/real/fact/',
-             'factmixed': 'CLIC/dsets/real/factmixed/',
-             'exp_plan': 'CLIC/dsets/exp_plan/7_5_projs/'}
-
-    if dataset not in dsets:
-        print('ERROR: dset not found')
-        exit()
-
-    return path_head + dsets[dataset]
+'''
+Example dsets and locations...
+dsets = {'NN': '3Drepro/Radon/NN/proj_5angles/all/',
+            'all': 'mvs/protein/all/',
+            'noise': 'mvs/protein/all_noise/',
+            'no e': 'mvs/protein/no_e/',
+            'mixed': 'mvs/protein/mixed/',
+            'mixed4': 'mvs/protein/mixed4/',
+            'mixedLarge': 'mvs/protein/mixedLarge/',
+            'mixedOff1': 'mvs/protein/offset/off1/',
+            'mixedOff2': 'mvs/protein/offset/off2/',
+            'mixedOff4': 'mvs/protein/offset/off4/',
+            'mixedOff8': 'mvs/protein/offset/off8/',
+            'ctfcor': 'mvs/protein/CTFYuriy/ctf_corrected/separated/',
+            'tempall': 'mvs/recon/temp_for_slides/all/',
+            'tempno_e': 'mvs/recon/temp_for_slides/no_e/',
+            'tempmixed': 'mvs/recon/temp_for_slides/mixed/',
+            'testlocal': '/home/lexi/Documents/Diamond/CLIC/test_data/mixed/',
+            'SLICEM': '/home/lexi/Documents/Diamond/CLIC/CLIC_exp/SLICEM_exp/mixture_2D.mrcs',
+            'exp_local': '/home/lexi/Documents/Diamond/CLIC/CLIC_refac/exp_plan/7_5_projs/',
+            'JFrank': 'CLIC/dsets/simulated/JFrank/particles/',
+            'JFrank1': 'CLIC/dsets/simulated/JFrank/particles1/',
+            'JFrank2': 'CLIC/dsets/simulated/JFrank/particles2/',
+            'JFrank3': 'CLIC/dsets/simulated/JFrank/particles3/',
+            'JFrankd23': 'CLIC/dsets/simulated/JFrank/particlesd23/',
+            'JFrankd41k': 'CLIC/dsets/simulated/JFrank/particlesd41k/',
+            'fact': 'CLIC/dsets/real/fact/',
+            'factmixed': 'CLIC/dsets/real/factmixed/',
+            'exp_plan': 'CLIC/dsets/exp_plan/7_5_projs/'}
+'''
 
 
 def load_mrc(path):
@@ -112,8 +104,8 @@ def gblur(im):
     return im
 
 
-def sinogram_main(Config):
-    dset_path = dsetpath(Config.dset)
+def sinogram_main(config):
+    dset_path = config.data_set
     nlines = 120  # Number of single lines in sinogram (120 will be 3 degree interval)
 
     # CLEAN
@@ -122,15 +114,15 @@ def sinogram_main(Config):
         first_pass = True
         with mrcfile.open(dset_path) as f:
             classes = f.data
-        for x in range(Config.num):
+        for x in range(config.num):
             im = classes[x]
             if first_pass:
-                ds_size = im.shape[0] // Config.ds
-                all_sinos = np.zeros((Config.num, nlines, ds_size))
+                ds_size = im.shape[0] // config.down_scale
+                all_sinos = np.zeros((config.num, nlines, ds_size))
                 first_pass = False
             # im = stand_image(im)
-            # im = add_noise(im, Config.snr)
-            im = downscale(im, Config.ds)
+            # im = add_noise(im, config.snr)
+            im = downscale(im, config.down_scale)
             im = stand_image(im)
             im = circular_mask(im)
             sino = make_sinogram(im, nlines)
@@ -140,29 +132,33 @@ def sinogram_main(Config):
     else:
         ''' Open individual particle images (numbered 1->N) '''
         first_pass = True
-        for x in range(Config.num):
+        for x in range(config.num):
             im_path = dset_path + f'{x}.mrc'
             im = load_mrc(im_path)
             if first_pass:
-                ds_size = im.shape[0] // Config.ds
-                all_sinos = np.zeros((Config.num, nlines, ds_size))
+                ds_size = im.shape[0] // config.down_scale
+                all_sinos = np.zeros((config.num, nlines, ds_size))
                 first_pass = False
             im = stand_image(im)
-            im = add_noise(im, Config.snr)
+            im = add_noise(im, config.snr)
 
+            '''
             import matplotlib.pyplot as plt
             plt.imshow(im, cmap='gray')
             plt.axis('off')
             plt.show()
+            '''
 
-            im = downscale(im, Config.ds)
+            im = downscale(im, config.down_scale)
             im = circular_mask(im)
             sino = make_sinogram(im, nlines)
 
+            '''
             import matplotlib.pyplot as plt
             plt.imshow(sino, cmap='gray')
             plt.axis('off')
             plt.show()
+            '''
 
             all_sinos[x] = sino
         return all_sinos

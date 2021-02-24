@@ -14,32 +14,35 @@ from clustering import clustering_main
 import plt_truth
 import discrete
 import sin_guesser
+import argparse
 
 
-class Config():
-    def __init__(self):
+parser = argparse.ArgumentParser()
 
-        ''' Dataset to be considered for clustering. To see all options and
-        format needed refer to sinogram_input.py script '''
-        self.dset = 'testlocal'
+t = ''' Dataset to be considered for clustering. To see all options and
+format needed refer to sinogram_input.py script '''
+parser.add_argument("-i", "--data_set", help=t, required=True, type=str)
 
-        ''' Number of projections to consider. A multiple of 16 is used as this
-        makes displaying output cleaner and for easy scoring of a two class system.
-        (TODO A few functions will need to change to accomodate arbitary number)'''
-        self.num = 100
+t = ''' Number of projections to consider. A multiple of 16 is used as this
+makes displaying output cleaner and for easy scoring of a two class system.
+(TODO A few functions will need to change to accomodate arbitary number)'''
+parser.add_argument("-n", "--num", help=t, default=10, type=int)
 
-        ''' Signal to noise ratio of projection before making sinograms '''
-        self.snr = 1/(2**1)
+t = ''' Signal to noise ratio of projection before making sinograms '''
+parser.add_argument("-r", "--snr", help=t, default=1, type=float)
 
-        ''' Downscaling of image prior to making sinograms '''
-        self.ds = 1
+t = ''' Downscaling of image prior to making sinograms '''
+parser.add_argument("-d", "--down_scale", help=t, default=2, type=int)
 
-        ''' Number of components of dimensional reduction technique '''
-        self.num_comps = 10
+t = ''' Number of components of dimensional reduction technique '''
+parser.add_argument("-c", "--num_comps", help=t, default=10, type=int)
 
-        ''' Dimensional reduction technique.
-        options are: PCA, UMAP, TSNE, LLE, ISOMAP, MDS, TRIMAP '''
-        self.model = 'UMAP'
+t = ''' Dimensional reduction technique.
+options are: PCA, UMAP, TSNE, LLE, ISOMAP, MDS, TRIMAP '''
+parser.add_argument("-m", "--model", help=t, default='UMAP', type=str)
+
+args = parser.parse_args()
+
 
 
 def plot(lines_reddim, num):
@@ -81,34 +84,26 @@ def plot(lines_reddim, num):
     plt.show()
 
 
-'''
-"""
-Optional code - for Fourier lines instead of real space sinogram lines
-"""
-from ft_input import ft_main
-all_ims = ft_main(Config())
-from ftsino_input import ftsino_main
-all_ims = ftsino_main(Config())
-'''
+if __name__ == '__main__':
 
-all_ims = sinogram_main(Config())
-lines_reddim = fitmodel(all_ims, Config().model, Config().num_comps)
-plot(lines_reddim, Config().num)
+    all_ims = sinogram_main(args)
+    lines_reddim = fitmodel(all_ims, args.model, args.num_comps)
+    plot(lines_reddim, args.num)
 
-'''
-"""
-Optional code - for experiment looking at how common line group spreads with noise
-"""
-r_lines = discrete.rand_lines(lines_reddim, n_rand=100)
-discrete.get_stats(r_lines)
-# r = 17.5
-all_groups = sin_guesser.main(Config().num, r)
-theta = 3
-th_lines = sin_guesser.choose_rand_group(all_groups)
+    '''
+    """
+    Optional code - for experiment looking at how common line group spreads with noise
+    """
+    r_lines = discrete.rand_lines(lines_reddim, n_rand=100)
+    discrete.get_stats(r_lines)
+    # r = 17.5
+    all_groups = sin_guesser.main(args.num, r)
+    theta = 3
+    th_lines = sin_guesser.choose_rand_group(all_groups)
 
-group_lines = discrete.get_discrete_lines(lines_reddim, th_lines, r, theta)
-discrete.get_stats(group_lines)
-discrete.plot(group_lines, lines_reddim)
-'''
+    group_lines = discrete.get_discrete_lines(lines_reddim, th_lines, r, theta)
+    discrete.get_stats(group_lines)
+    discrete.plot(group_lines, lines_reddim)
+    '''
 
-clustering_main(lines_reddim, Config())
+    clustering_main(lines_reddim, args)
