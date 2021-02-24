@@ -154,7 +154,7 @@ def sinogram_main(config):
 
         if dset_path.endswith('.mrcs'):
             im = classes[x]
-        elif dset_path.endswith('.mrc'):
+        elif dset_path.endswith('mrc'):
             im_path = all_files[x]
             im = load_mrc(im_path)
 
