@@ -19,14 +19,16 @@ import argparse
 
 parser = argparse.ArgumentParser()
 
-t = ''' Dataset to be considered for clustering. To see all options and
-format needed refer to sinogram_input.py script '''
+t = ''' Dataset to be considered for clustering. Input path to mrcs
+stack or to individual mrc particles with "/PATH/TO/PARTS/*.mrc"
+(Don't forget "")
+'''
 parser.add_argument("-i", "--data_set", help=t, required=True, type=str)
 
 t = ''' Number of projections to consider. A multiple of 16 is used as this
 makes displaying output cleaner and for easy scoring of a two class system.
 (TODO A few functions will need to change to accomodate arbitary number)'''
-parser.add_argument("-n", "--num", help=t, default=10, type=int)
+parser.add_argument("-n", "--num", help=t, default=1000, type=int)
 
 t = ''' Signal to noise ratio of projection before making sinograms '''
 parser.add_argument("-r", "--snr", help=t, default=1, type=float)
@@ -40,6 +42,10 @@ parser.add_argument("-c", "--num_comps", help=t, default=10, type=int)
 t = ''' Dimensional reduction technique.
 options are: PCA, UMAP, TSNE, LLE, ISOMAP, MDS, TRIMAP '''
 parser.add_argument("-m", "--model", help=t, default='UMAP', type=str)
+
+t = ''' Number of lines in one sinogram (shouldn't need to change
+recommended=120)'''
+parser.add_argument("-l", "--nlines", help=t, default=120, type=int)
 
 args = parser.parse_args()
 
@@ -86,7 +92,8 @@ def plot(lines_reddim, num):
 
 if __name__ == '__main__':
 
-    all_ims = sinogram_main(args)
+    all_ims, num = sinogram_main(args)
+    args.num = num  # Update with lowest num
     lines_reddim = fitmodel(all_ims, args.model, args.num_comps)
     plot(lines_reddim, args.num)
 

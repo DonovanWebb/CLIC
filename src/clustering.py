@@ -181,10 +181,7 @@ def print_clusters_all(num, all_paired):
         elif c2 < c1:
             clusters[clusters == c1] = c2
 
-        # Display cluster
-        # cl = np.reshape(clusters, (-1, 16))
-        cl = np.reshape(clusters, (-1, 10))
-    return cl
+    return clusters
 
 
 def print_clusters(clusters, count, large_merges, paired):
@@ -208,8 +205,7 @@ def print_clusters(clusters, count, large_merges, paired):
         count[c2] += count[c1]
 
     # Display cluster
-    # cl = np.reshape(clusters, (-1, 16))
-    cl = np.reshape(clusters, (-1, 10)) # for good displaying and for cluster_score
+    cl = clusters
     return cl, clusters, count, large_merges
 
 
@@ -224,24 +220,24 @@ def cluster_score(cl):
     return score
 
 
-def clustering_main(lines, Config):
-    cl_labels = list(range(Config.num))
+def clustering_main(lines, config):
+    cl_labels = list(range(config.num))
     print(cl_labels)
-    cl_dict = initial_dict(lines, Config.num)
+    cl_dict = initial_dict(lines, config.num)
     scoretable = find_scoretable(cl_dict, cl_labels)
     all_paired = []
     Z = []  # Linkage matrix for drawing dendrogram
-    Z_corr = list(range(Config.num))
+    Z_corr = list(range(config.num))
     all_cl_score = []
-    for i in range(Config.num - 1):
+    for i in range(config.num - 1):
         cl_dict, scoretable, cl_labels, paired, Z, Z_corr = update_cl(cl_dict, scoretable,
                                                                       cl_labels, Z, Z_corr)
         print(paired)  # To see which are paired
         all_paired.append(paired)
         print(cl_labels)  # To see current clusters
         if i == 0:  # First pass
-            clusters = np.array(list(range(Config.num)))
-            count = {x: 1 for x in range(Config.num)}
+            clusters = np.array(list(range(config.num)))
+            count = {x: 1 for x in range(config.num)}
             cl, clusters, count, large_merges = print_clusters(
                 clusters, count, [], paired)
         else:

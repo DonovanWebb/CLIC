@@ -96,6 +96,7 @@ def find_im_size(path):
     im_size = im.shape[0]
     return im_size
 
+
 def gblur(im):
     ''' Adds gaussian blur to projection '''
     import cv2
@@ -104,61 +105,64 @@ def gblur(im):
     return im
 
 
+def pre_process(im, config):
+    # im = stand_image(im)
+    # im = add_noise(im, config.snr)
+    '''
+    # optional displaying (for debug)
+    import matplotlib.pyplot as plt
+    plt.imshow(im, cmap='gray')
+    plt.axis('off')
+    plt.show()
+    '''
+    im = downscale(im, config.down_scale)
+    im = stand_image(im)
+    im = circular_mask(im)
+    sino = make_sinogram(im, config.nlines)
+    '''
+    import matplotlib.pyplot as plt
+    plt.imshow(sino, cmap='gray')
+    plt.axis('off')
+    plt.show()
+    '''
+    return sino
+
+
 def sinogram_main(config):
     dset_path = config.data_set
-    nlines = 120  # Number of single lines in sinogram (120 will be 3 degree interval)
 
-    # CLEAN
     if dset_path.endswith('.mrcs'):
-        ''' Open mrcs class file '''
-        first_pass = True
         with mrcfile.open(dset_path) as f:
             classes = f.data
-        for x in range(config.num):
-            im = classes[x]
-            if first_pass:
-                ds_size = im.shape[0] // config.down_scale
-                all_sinos = np.zeros((config.num, nlines, ds_size))
-                first_pass = False
-            # im = stand_image(im)
-            # im = add_noise(im, config.snr)
-            im = downscale(im, config.down_scale)
-            im = stand_image(im)
-            im = circular_mask(im)
-            sino = make_sinogram(im, nlines)
-            all_sinos[x] = sino
-        return all_sinos
+            n_max = classes.shape[-1]
+    elif dset_path.endswith('mrc'):
+        import glob
+        all_files = glob.glob(dset_path)
+        n_max = len(all_files)
+        if all_files == []:
+            print(f"Error: No mrc found in: {dset_path}")
+            exit()
 
     else:
-        ''' Open individual particle images (numbered 1->N) '''
-        first_pass = True
-        for x in range(config.num):
-            im_path = dset_path + f'{x}.mrc'
+        print(f"Error: Invalid path specification: {dset_path}")
+        exit()
+
+    n = min(n_max, config.num)
+    print(f"Will use {n} particles")
+
+    for x in range(n):
+
+        if dset_path.endswith('.mrcs'):
+            im = classes[x]
+        elif dset_path.endswith('.mrc'):
+            im_path = all_files[x]
             im = load_mrc(im_path)
-            if first_pass:
-                ds_size = im.shape[0] // config.down_scale
-                all_sinos = np.zeros((config.num, nlines, ds_size))
-                first_pass = False
-            im = stand_image(im)
-            im = add_noise(im, config.snr)
 
-            '''
-            import matplotlib.pyplot as plt
-            plt.imshow(im, cmap='gray')
-            plt.axis('off')
-            plt.show()
-            '''
+        if x == 0:  # first pass makes all_sinos
+            ds_size = im.shape[0] // config.down_scale
+            all_sinos = np.zeros((n, config.nlines, ds_size))
 
-            im = downscale(im, config.down_scale)
-            im = circular_mask(im)
-            sino = make_sinogram(im, nlines)
+        sino = pre_process(im, config)
+        all_sinos[x] = sino
 
-            '''
-            import matplotlib.pyplot as plt
-            plt.imshow(sino, cmap='gray')
-            plt.axis('off')
-            plt.show()
-            '''
-
-            all_sinos[x] = sino
-        return all_sinos
+    return all_sinos, n
