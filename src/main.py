@@ -17,6 +17,15 @@ import sin_guesser
 import argparse
 
 
+# Other dependencies
+from skimage.transform import radon, resize
+import mrcfile
+from sklearn.metrics.pairwise import euclidean_distances as eucl_dist
+import matplotlib.pyplot as plt
+from scipy.cluster.hierarchy import dendrogram
+import time
+
+
 parser = argparse.ArgumentParser()
 
 t = ''' Dataset to be considered for clustering. Input path to mrcs
