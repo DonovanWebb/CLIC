@@ -1,9 +1,18 @@
-./refac/__pycache__
-./refac/*~
 ./test_data
 ./test_data/*
-./refac/__pycache__/
-./refac/__pycache__/*
-./refac/main.py.backup
-./refac/plt_truth.py~
+./exp_plan
+./exp_plan/*
 
+
+./src/clustering.py~
+./src/__pycache__
+./src/dendrogram.py
+./src/dendrogram.py~
+./src/dim_red.py~
+./src/ft_input.py
+./src/ft_input.py~
+./src/ftsino_input.py
+./src/ftsino_input.py~
+./src/main.py~
+./src/sinogram_input.py~
+./src/sino_Yuriy
