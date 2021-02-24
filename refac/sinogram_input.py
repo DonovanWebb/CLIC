@@ -31,6 +31,7 @@ def dsetpath(dataset):
              'tempmixed': 'mvs/recon/temp_for_slides/mixed/',
              'testlocal': '/home/lexi/Documents/Diamond/CLIC/CLIC_refac/test_data/mixed/',
              'SLICEM': '/home/lexi/Documents/Diamond/CLIC/CLIC_exp/SLICEM_exp/mixture_2D.mrcs',
+             'exp_local': '/home/lexi/Documents/Diamond/CLIC/CLIC_refac/exp_plan/7_5_projs/',
              'JFrank': 'CLIC/dsets/simulated/JFrank/particles/',
              'JFrank1': 'CLIC/dsets/simulated/JFrank/particles1/',
              'JFrank2': 'CLIC/dsets/simulated/JFrank/particles2/',
@@ -149,21 +150,19 @@ def sinogram_main(Config):
             im = stand_image(im)
             im = add_noise(im, Config.snr)
 
-            '''
             import matplotlib.pyplot as plt
             plt.imshow(im, cmap='gray')
+            plt.axis('off')
             plt.show()
-            '''
 
             im = downscale(im, Config.ds)
             im = circular_mask(im)
             sino = make_sinogram(im, nlines)
 
-            '''
             import matplotlib.pyplot as plt
             plt.imshow(sino, cmap='gray')
+            plt.axis('off')
             plt.show()
-            '''
 
             all_sinos[x] = sino
         return all_sinos

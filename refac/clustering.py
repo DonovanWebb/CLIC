@@ -262,7 +262,7 @@ def clustering_main(lines, Config):
     ax = plt.gca()
     xlbls = ax.get_xmajorticklabels()
     for lbl in xlbls:
-        for x in range(4):
-            if int(lbl.get_text()) % 4 == x:
+        for x in range(2):
+            if int(lbl.get_text()) % 2 == x:
                 lbl.set_color(colors[int(x)])
     plt.show()

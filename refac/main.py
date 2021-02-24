@@ -21,7 +21,7 @@ class Config():
 
         ''' Dataset to be considered for clustering. To see all options and
         format needed refer to sinogram_input.py script '''
-        self.dset = 'SLICEM'
+        self.dset = 'testlocal'
 
         ''' Number of projections to consider. A multiple of 16 is used as this
         makes displaying output cleaner and for easy scoring of a two class system.
@@ -29,13 +29,13 @@ class Config():
         self.num = 100
 
         ''' Signal to noise ratio of projection before making sinograms '''
-        self.snr = 1/(2**0)
+        self.snr = 1/(2**1)
 
         ''' Downscaling of image prior to making sinograms '''
         self.ds = 1
 
         ''' Number of components of dimensional reduction technique '''
-        self.num_comps = 3
+        self.num_comps = 10
 
         ''' Dimensional reduction technique.
         options are: PCA, UMAP, TSNE, LLE, ISOMAP, MDS, TRIMAP '''
