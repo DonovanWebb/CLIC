@@ -150,13 +150,16 @@ def sinogram_main(config):
     n = min(n_max, config.num)
     print(f"Will use {n} particles")
 
+    ids = []
     for x in range(n):
 
         if dset_path.endswith('.mrcs'):
             im = classes[x]
+            ids.append(f'{dset_path}:{x}')
         elif dset_path.endswith('mrc'):
             im_path = all_files[x]
             im = load_mrc(im_path)
+            ids.append(f'{im_path}')
 
         if x == 0:  # first pass makes all_sinos
             ds_size = im.shape[0] // config.down_scale
@@ -165,4 +168,4 @@ def sinogram_main(config):
         sino = pre_process(im, config)
         all_sinos[x] = sino
 
-    return all_sinos, n
+    return all_sinos, n, ids

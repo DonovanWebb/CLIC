@@ -23,6 +23,7 @@ import numpy as np
 from sklearn.metrics.pairwise import euclidean_distances as eucl_dist
 import matplotlib.pyplot as plt
 from scipy.cluster.hierarchy import dendrogram
+import star_writer
 
 
 def debug_p(msg):
@@ -220,7 +221,7 @@ def cluster_score(cl):
     return score
 
 
-def clustering_main(lines, config):
+def clustering_main(lines, config, star_file):
     cl_labels = list(range(config.num))
     print(cl_labels)
     cl_dict = initial_dict(lines, config.num)
@@ -244,6 +245,7 @@ def clustering_main(lines, config):
             cl, clusters, count, large_merges = print_clusters(
                 clusters, count, large_merges, paired)
         print(cl)  # To see which assignment to clusters
+        star_file = star_writer.update(star_file, cl, i)
         # append to txt file
         # cl_score = cluster_score(cl)  # Only works with binary test
         # print(cl_score)

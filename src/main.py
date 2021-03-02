@@ -11,6 +11,7 @@ import numpy as np
 from sinogram_input import sinogram_main
 from dim_red import fitmodel
 from clustering import clustering_main
+import star_writer
 import plt_truth
 import discrete
 import sin_guesser
@@ -24,6 +25,7 @@ from sklearn.metrics.pairwise import euclidean_distances as eucl_dist
 import matplotlib.pyplot as plt
 from scipy.cluster.hierarchy import dendrogram
 import time
+import gemmi
 
 
 parser = argparse.ArgumentParser()
@@ -101,7 +103,9 @@ def plot(lines_reddim, num):
 
 if __name__ == '__main__':
 
-    all_ims, num = sinogram_main(args)
+    all_ims, num, ids = sinogram_main(args)
+    star_file  = star_writer.create(ids)
+    
     args.num = num  # Update with lowest num
     lines_reddim = fitmodel(all_ims, args.model, args.num_comps)
     plot(lines_reddim, args.num)
@@ -122,4 +126,4 @@ if __name__ == '__main__':
     discrete.plot(group_lines, lines_reddim)
     '''
 
-    clustering_main(lines_reddim, args)
+    clustering_main(lines_reddim, args, star_file)
