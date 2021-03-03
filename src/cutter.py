@@ -10,7 +10,7 @@ def cut(star_file, it):
     block = dendro_star.find_block('particles')
     locations = [x.split(':') for x in block.find_values(f'_path')]
     classes = [int(x) for x in block.find_values(f'_it{it}')]
-    print(classes)
+    n = len(classes)
 
     '''
     Now need to open each dataset with labelled classes
@@ -21,9 +21,9 @@ def cut(star_file, it):
 
     clusters = np.array(classes)
 
-    fig, axs = plt.subplots(10, 10)
+    fig, axs = plt.subplots(10, n//10 + 1)
     for x in range(10):
-        for y in range(10):
+        for y in range(n//10 + 1):
             a = axs[x, y]
             a.set_xticks([])
             a.set_yticks([])
@@ -37,7 +37,7 @@ def cut(star_file, it):
     colors = ['red', 'green', 'blue', 'yellow', 'purple', 'orange',
             'pink', 'brown', 'black', 'magenta', 'cyan']
 
-    for i in range(100):
+    for i in range(n):
         cl = np.where(clusters == i)[0]
         if cl.size != 0:
             group_counter += 1
@@ -50,7 +50,7 @@ def cut(star_file, it):
                         im = f.data
 
 
-                a = axs[counter//10, counter%10]
+                a = axs[counter//(n//10+1), counter%(n//10+1)]
                 a.spines["top"].set_visible(True)
                 a.spines["right"].set_visible(True)
                 a.spines["left"].set_visible(True)
