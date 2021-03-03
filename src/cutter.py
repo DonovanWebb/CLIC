@@ -8,14 +8,16 @@ import argparse
 def cut(star_file, it):
     dendro_star = gemmi.cif.read_file(star_file)
     block = dendro_star.find_block('particles')
+    locations = [x.split(':') for x in block.find_values(f'_path')]
     classes = [int(x) for x in block.find_values(f'_it{it}')]
     print(classes)
 
     '''
     Now need to open each dataset with labelled classes
     '''
-    with mrcfile.open('../../CLIC_exp/SLICEM_exp/mixture_2D.mrcs') as f:
-        all_ims = f.data
+    if locations[0][0].endswith('mrcs'):
+        with mrcfile.open(locations[0][0]) as f:
+            all_ims = f.data
 
     clusters = np.array(classes)
 
@@ -34,14 +36,20 @@ def cut(star_file, it):
     group_counter = -1
     colors = ['red', 'green', 'blue', 'yellow', 'purple', 'orange',
             'pink', 'brown', 'black', 'magenta', 'cyan']
+
     for i in range(100):
         cl = np.where(clusters == i)[0]
         if cl.size != 0:
             group_counter += 1
             color = colors[group_counter%len(colors)]
             for x in cl:
-                im = all_ims[x]
-                #im = cv2.resize(im, (100,100))
+                if locations[x][0].endswith('mrcs'):
+                    im = all_ims[int(locations[x][1])]
+                elif locations[x][0].endswith('mrc'):
+                    with mrcfile.open(locations[x][0]) as f:
+                        im = f.data
+
+
                 a = axs[counter//10, counter%10]
                 a.spines["top"].set_visible(True)
                 a.spines["right"].set_visible(True)
