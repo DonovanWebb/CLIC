@@ -134,7 +134,7 @@ def sinogram_main(config):
     if dset_path.endswith('.mrcs'):
         with mrcfile.open(dset_path) as f:
             classes = f.data
-            n_max = classes.shape[-1]
+            n_max = classes.shape[0]
     elif dset_path.endswith('mrc'):
         import glob
         all_files = glob.glob(dset_path)
@@ -155,7 +155,7 @@ def sinogram_main(config):
 
         if dset_path.endswith('.mrcs'):
             im = classes[x]
-            ids.append(f'{dset_path}:{x}')
+            ids.append(f'{x}@{dset_path}')
         elif dset_path.endswith('mrc'):
             im_path = all_files[x]
             im = load_mrc(im_path)
