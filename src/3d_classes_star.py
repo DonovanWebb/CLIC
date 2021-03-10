@@ -1,11 +1,10 @@
 import gemmi
 import argparse
 
-def new_star(class_n, members, relion_star):
+def new_star(class_n, members, relion_star, table):
     block = relion_star.find_block('particles')
     loop = block.find_loop_item('_rlnimagename').loop
     tags = loop.tags
-    table = [list(x) for x in block.find(tags)]
     loop = block.init_loop('', tags)
     for m in members:
         loop.add_row(table[m])
@@ -50,7 +49,11 @@ if __name__ == '__main__':
         mems.append(rln_ind)
         cl_dict[im_class] = mems
 
+    block = relion_star.find_block('particles')
+    loop = block.find_loop_item('_rlnimagename').loop
+    tags = loop.tags
+    table = [list(x) for x in block.find(tags)]
     for x in set(classes):
         mems = cl_dict[x]
-        new_star(x, mems, relion_star)
+        new_star(x, mems, relion_star, table)
 
