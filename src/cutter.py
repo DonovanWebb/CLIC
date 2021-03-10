@@ -15,9 +15,6 @@ def cut(star_file, it):
     '''
     Now need to open each dataset with labelled classes
     '''
-    if locations[0][-1].endswith('mrcs'):
-        with mrcfile.open(locations[0][-1]) as f:
-            all_ims = f.data
 
     clusters = np.array(classes)
 
@@ -44,7 +41,9 @@ def cut(star_file, it):
             color = colors[group_counter%len(colors)]
             for x in cl:
                 if locations[x][-1].endswith('mrcs'):
-                    im = all_ims[int(locations[x][0])]
+                    with mrcfile.open(locations[x][-1]) as f:
+                        all_ims = f.data
+                    im = all_ims[int(locations[x][0]) - 1]
                 elif locations[x][-1].endswith('mrc'):
                     with mrcfile.open(locations[x][0]) as f:
                         im = f.data

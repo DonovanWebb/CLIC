@@ -164,7 +164,7 @@ def sinogram_main(config):
 
         if dset_path.endswith('.mrcs'):
             im = classes[x]
-            ids.append(f'{x}@{dset_path}')
+            ids.append(f'{x+1}@{dset_path}')
         elif dset_path.endswith('mrc'):
             im_path = all_files[x]
             im = load_mrc(im_path)
@@ -173,7 +173,7 @@ def sinogram_main(config):
             im_loc = locations[x]
             (ind, stack_loc) = im_loc.split('@')
             stack = load_mrc(stack_loc)
-            im = stack[int(ind)]
+            im = stack[int(ind) - 1]  # Rln stack starts at 1!
             ids.append(f'{im_loc}')
 
         if x == 0:  # first pass makes all_sinos
