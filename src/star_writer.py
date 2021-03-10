@@ -33,5 +33,5 @@ def update(star_file, labels, it):
         new_row.append(f'{labels[i]}\t')
         loop.add_row(new_row)  # update temp new table with all data
 
-    new_doc.write_file('particles.star')
+    new_doc.write_file('particles_CLIC.star')
     return new_doc
