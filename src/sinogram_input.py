@@ -7,6 +7,7 @@ This script loads projections, adds noise, masks, makes sinograms
 import numpy as np
 from skimage.transform import radon, resize
 import mrcfile
+import gemmi
 
 
 '''
@@ -142,6 +143,14 @@ def sinogram_main(config):
         if all_files == []:
             print(f"Error: No mrc found in: {dset_path}")
             exit()
+    elif dset_path.endswith('star'):
+        # read star file to extract im locs
+        starfile = gemmi.cif.read_file(dset_path)
+        block = starfile.find_block('particles')
+        locations = [x for x in block.find_values(f'_rlnimagename')]
+        n_max = len(locations)
+        # need error handling here
+
 
     else:
         print(f"Error: Invalid path specification: {dset_path}")
@@ -160,6 +169,12 @@ def sinogram_main(config):
             im_path = all_files[x]
             im = load_mrc(im_path)
             ids.append(f'{im_path}')
+        elif dset_path.endswith('star'):
+            im_loc = locations[x]
+            (ind, stack_loc) = im_loc.split('@')
+            stack = load_mrc(stack_loc)
+            im = stack[int(ind)]
+            ids.append(f'{im_loc}')
 
         if x == 0:  # first pass makes all_sinos
             ds_size = im.shape[0] // config.down_scale

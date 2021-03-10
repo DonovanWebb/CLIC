@@ -31,14 +31,12 @@ import gemmi
 parser = argparse.ArgumentParser()
 
 t = ''' Dataset to be considered for clustering. Input path to mrcs
-stack or to individual mrc particles with "/PATH/TO/PARTS/*.mrc"
-(Don't forget "")
+stack, to individual mrc particles, or to particle starfile with "/PATH/TO/PARTS/*.mrc"
+(Notes: 1. Don't forget "", 2. if star file run from relion home dir)
 '''
 parser.add_argument("-i", "--data_set", help=t, required=True, type=str)
 
-t = ''' Number of projections to consider. A multiple of 16 is used as this
-makes displaying output cleaner and for easy scoring of a two class system.
-(TODO A few functions will need to change to accomodate arbitary number)'''
+t = ''' Number of projections to consider. Defaults to 1000 '''
 parser.add_argument("-n", "--num", help=t, default=1000, type=int)
 
 t = ''' Signal to noise ratio of projection before making sinograms '''
