@@ -1,6 +1,13 @@
 import gemmi
 import argparse
 
+def from_z(z_row, z_cut):
+    for x in range(len(z_row)):
+        if z_cut < float(z_row[x]):
+            return x-1
+    print("ERROR: Cut too high, all in one class")
+    return len(z_row)
+
 def new_star(class_n, members, relion_star, table):
     block = relion_star.find_block('particles')
     loop = block.find_loop_item('_rlnimagename').loop
@@ -18,18 +25,24 @@ if __name__ == '__main__':
     parser.add_argument("-i", "--clic_input", help=t, required=True, type=str)
     t = ''' Relion star file '''
     parser.add_argument("-r", "--relion_input", help=t, required=True, type=str)
-    t = ''' CLIC star file '''
-    parser.add_argument("-c", "--cut", help="level to cut at", required=True, type=int)
+    t = ''' z score to cut at '''
+    parser.add_argument("-c", "--cut", help="level to cut at", required=True, type=float)
 
     args = parser.parse_args()
 
     clic_file = args.clic_input
     relion_file = args.relion_input
-    it = args.cut
+    z_cut = args.cut
 
 
     clic_star = gemmi.cif.read_file(clic_file)
     clic_block = clic_star.find_block('particles')
+    for x in clic_block:
+        table = x.loop
+    tags = table.tags
+    table = clic_block.find(tags)
+    z_row = list(table[0])[2:]
+    it = from_z(z_row, z_cut)
     im_names = [x for x in clic_block.find_values(f'_path')]
     classes = [int(x) for x in clic_block.find_values(f'_it{it}')]
     # dict of classes and members (rln index)
