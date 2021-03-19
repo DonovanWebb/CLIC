@@ -255,6 +255,7 @@ def clustering_main(lines, config, star_file):
 
     fig = plt.figure(figsize=(25, 10))
     dn = dendrogram(Z)
+    np.save("CLIC_images/dendrogram", Z)
     # Add color to dendro
     colors = ['r', 'b', 'g', 'yellow', 'purple', 'brown']
     ax = plt.gca()
@@ -263,4 +264,5 @@ def clustering_main(lines, config, star_file):
         for x in range(2):
             if int(lbl.get_text()) % 2 == x:
                 lbl.set_color(colors[int(x)])
+    plt.savefig("CLIC_images/dendrogram.pdf")
     plt.show()

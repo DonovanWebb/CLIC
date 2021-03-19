@@ -26,6 +26,7 @@ import matplotlib.pyplot as plt
 from scipy.cluster.hierarchy import dendrogram
 import time
 import gemmi
+import os
 
 
 parser = argparse.ArgumentParser()
@@ -73,6 +74,7 @@ def plot(lines_reddim, num):
             plt.scatter(lines_reddim[x*per_sino:(x+1)*per_sino, 0],
                         lines_reddim[x*per_sino:(x+1)*per_sino:, 1])
     plt.axis('off')
+    plt.savefig("CLIC_images/2d_plot_1.pdf")
     plt.figure(2)
     for x in range(num):
         if x < 160:
@@ -83,6 +85,7 @@ def plot(lines_reddim, num):
                 plt.scatter(lines_reddim[x*per_sino:(x+1)*per_sino, 0],
                             lines_reddim[x*per_sino:(x+1)*per_sino:, 1], c='b', alpha=0.4)
     plt.axis('off')
+    plt.savefig("CLIC_images/2d_plot_binary.pdf")
 
     fig = plt.figure(3)
     ax = fig.gca(projection='3d')
@@ -96,11 +99,12 @@ def plot(lines_reddim, num):
                 ax.plot(lines_reddim[x*per_sino:(x+1)*per_sino, 0],
                         lines_reddim[x*per_sino:(x+1)*per_sino:, 1],
                         lines_reddim[x*per_sino:(x+1)*per_sino:, 2], c='b', alpha=0.4)
-    plt.show()
+    plt.savefig("CLIC_images/3d_plot_binary.pdf")
 
 
 if __name__ == '__main__':
 
+    os.mkdir('CLIC_images')
     all_ims, num, ids = sinogram_main(args)
     star_file  = star_writer.create(ids)
     
