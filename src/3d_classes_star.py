@@ -43,21 +43,21 @@ if __name__ == '__main__':
     table = clic_block.find(tags)
     z_row = list(table[0])[2:]
     it = from_z(z_row, z_cut)
-    im_names = [x for x in clic_block.find_values(f'_path')]
-    classes = [int(x) for x in clic_block.find_values(f'_it{it}')]
+    im_names = [x for x in clic_block.find_values(f'_path')][1:]
+    classes = [int(x) for x in clic_block.find_values(f'_it{it}')][1:]
     # dict of classes and members (rln index)
     cl_dict = {i : [] for i in set(classes)}
 
 
     relion_star = gemmi.cif.read_file(relion_file)
     relion_block = relion_star.find_block('particles')
-    all_parts = [x for x in relion_block.find_values(f'_rlnimagename')]
+    all_parts = [x for x in relion_block.find_values(f'_rlnimagename')][1:]
 
 
     for x in range(len(im_names)):
         im = im_names[x]
         im_class = classes[x]
-        rln_ind = all_parts.index(im)
+        rln_ind = all_parts.index(im) + 1
         mems = cl_dict[im_class]
         mems.append(rln_ind)
         cl_dict[im_class] = mems
