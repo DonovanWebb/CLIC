@@ -5,11 +5,26 @@ import matplotlib.pyplot  as plt
 import argparse
 
 
-def cut(star_file, it):
+def from_z(z_row, z_cut):
+    for x in range(len(z_row)):
+        if z_cut < float(z_row[x]):
+            return x-1
+    print("ERROR: Cut too high, all in one class")
+    return len(z_row)
+
+def cut(star_file, z_cut):
     dendro_star = gemmi.cif.read_file(star_file)
     block = dendro_star.find_block('particles')
     locations = [x.split('@') for x in block.find_values(f'_path')]
-    classes = [int(x) for x in block.find_values(f'_it{it}')]
+    for x in block:
+        table = x.loop
+    tags = table.tags
+    table = block.find(tags)
+    z_row = list(table[0])[2:]
+    it = from_z(z_row, z_cut)
+    vals = list(block.find_values(f'_it{it}'))[1:]
+    print(vals)
+    classes = [int(x) for x in vals]
     n = len(classes)
 
     '''
@@ -36,6 +51,7 @@ def cut(star_file, it):
 
     for i in range(n):
         cl = np.where(clusters == i)[0]
+        cl = np.array([x+1 for x in cl])  # correct for indexing as z first row
         if cl.size != 0:
             group_counter += 1
             color = colors[group_counter%len(colors)]
@@ -81,7 +97,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-i", "--input", help="star file from CLIC", required=True, type=str)
-    parser.add_argument("-c", "--cut", help="level to cut at", required=True, type=int)
+    parser.add_argument("-c", "--cut", help="level to cut at", required=True, type=float)
 
     args = parser.parse_args()
 

@@ -164,7 +164,7 @@ def update_cl(cluster_dict, scoretable, cluster_labels, Z, Z_corr):
     Z.append([Z_corr[p0], Z_corr[p1], 1/score, 0])
     Z_corr[p0] = np.max(Z_corr) + 1
 
-    return cluster_dict, scoretable, cluster_labels, paired, Z, Z_corr
+    return cluster_dict, scoretable, cluster_labels, paired, Z, Z_corr, 1/score
 
 
 def print_clusters_all(num, all_paired):
@@ -231,7 +231,7 @@ def clustering_main(lines, config, star_file):
     Z_corr = list(range(config.num))
     all_cl_score = []
     for i in range(config.num - 1):
-        cl_dict, scoretable, cl_labels, paired, Z, Z_corr = update_cl(cl_dict, scoretable,
+        cl_dict, scoretable, cl_labels, paired, Z, Z_corr, z_score = update_cl(cl_dict, scoretable,
                                                                       cl_labels, Z, Z_corr)
         print(paired)  # To see which are paired
         all_paired.append(paired)
@@ -245,7 +245,7 @@ def clustering_main(lines, config, star_file):
             cl, clusters, count, large_merges = print_clusters(
                 clusters, count, large_merges, paired)
         print(cl)  # To see which assignment to clusters
-        star_file = star_writer.update(star_file, cl, i)
+        star_file = star_writer.update(star_file, cl, i, z_score)
         # append to txt file
         # cl_score = cluster_score(cl)  # Only works with binary test
         # print(cl_score)
