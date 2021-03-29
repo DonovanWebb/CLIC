@@ -1,6 +1,6 @@
 import gemmi
 
-def create(ids):
+def create(ids, clic_dir):
     out_doc = gemmi.cif.Document()
     block = out_doc.add_new_block('particles')
     tags = ['_id', '_path']
@@ -9,11 +9,11 @@ def create(ids):
     for x in range(1, len(ids)):
         loop.add_row([f'{x}\t', f'{ids[x]}\t'])
 
-    out_doc.write_file('particles.star')
+    out_doc.write_file(f'{clic_dir}/particles.star')
     return out_doc
 
 
-def update(star_file, labels, it, z_score):
+def update(star_file, labels, it, z_score, clic_dir):
     block = star_file.find_block('particles')
     ''' a bit hacky... this gets correct particle table '''
     for x in block:
@@ -42,5 +42,5 @@ def update(star_file, labels, it, z_score):
         new_row.append(f'{labels[i]}\t')
         loop.add_row(new_row)  # update temp new table with all data
 
-    new_doc.write_file('particles_CLIC.star')
+    new_doc.write_file(f'{clic_dir}/particles_CLIC.star')
     return new_doc

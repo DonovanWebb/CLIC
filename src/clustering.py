@@ -221,7 +221,7 @@ def cluster_score(cl):
     return score
 
 
-def clustering_main(lines, config, star_file):
+def clustering_main(lines, config, star_file, clic_dir):
     cl_labels = list(range(config.num))
     print(cl_labels)
     cl_dict = initial_dict(lines, config.num)
@@ -245,7 +245,7 @@ def clustering_main(lines, config, star_file):
             cl, clusters, count, large_merges = print_clusters(
                 clusters, count, large_merges, paired)
         print(cl)  # To see which assignment to clusters
-        star_file = star_writer.update(star_file, cl, i, z_score)
+        star_file = star_writer.update(star_file, cl, i, z_score, clic_dir)
         # append to txt file
         # cl_score = cluster_score(cl)  # Only works with binary test
         # print(cl_score)
@@ -255,7 +255,7 @@ def clustering_main(lines, config, star_file):
 
     fig = plt.figure(figsize=(25, 10))
     dn = dendrogram(Z)
-    np.save("CLIC_images/dendrogram", Z)
+    np.save(f"{clic_dir}/dendrogram", Z)
     # Add color to dendro
     colors = ['r', 'b', 'g', 'yellow', 'purple', 'brown']
     ax = plt.gca()
@@ -264,5 +264,5 @@ def clustering_main(lines, config, star_file):
         for x in range(2):
             if int(lbl.get_text()) % 2 == x:
                 lbl.set_color(colors[int(x)])
-    plt.savefig("CLIC_images/dendrogram.pdf")
+    plt.savefig(f"{clic_dir}/dendrogram.pdf")
     plt.show()

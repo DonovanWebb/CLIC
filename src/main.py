@@ -61,7 +61,7 @@ args = parser.parse_args()
 
 
 
-def plot(lines_reddim, num):
+def plot(lines_reddim, num, clic_dir):
     ''' Simple plotting of dimensionally reduced lines. Set up for dset with
     two classes (alternating) '''
     import matplotlib.pyplot as plt
@@ -74,7 +74,7 @@ def plot(lines_reddim, num):
             plt.scatter(lines_reddim[x*per_sino:(x+1)*per_sino, 0],
                         lines_reddim[x*per_sino:(x+1)*per_sino:, 1])
     plt.axis('off')
-    plt.savefig("CLIC_images/2d_plot_1.pdf")
+    plt.savefig(f"{clic_dir}/2d_plot_1.pdf")
     plt.figure(2)
     for x in range(num):
         if x < 160:
@@ -85,7 +85,7 @@ def plot(lines_reddim, num):
                 plt.scatter(lines_reddim[x*per_sino:(x+1)*per_sino, 0],
                             lines_reddim[x*per_sino:(x+1)*per_sino:, 1], c='b', alpha=0.4)
     plt.axis('off')
-    plt.savefig("CLIC_images/2d_plot_binary.pdf")
+    plt.savefig(f"{clic_dir}/2d_plot_binary.pdf")
 
     fig = plt.figure(3)
     ax = fig.gca(projection='3d')
@@ -99,18 +99,20 @@ def plot(lines_reddim, num):
                 ax.plot(lines_reddim[x*per_sino:(x+1)*per_sino, 0],
                         lines_reddim[x*per_sino:(x+1)*per_sino:, 1],
                         lines_reddim[x*per_sino:(x+1)*per_sino:, 2], c='b', alpha=0.4)
-    plt.savefig("CLIC_images/3d_plot_binary.pdf")
+    plt.savefig(f"{clic_dir}/3d_plot_binary.pdf")
 
 
 if __name__ == '__main__':
 
-    os.mkdir('CLIC_images')
+    time_stamp = time.strftime("%Y%m%d-%H%M%S")
+    clic_dir = f'CLIC_Job_{time_stamp}'
+    os.makedirs(clic_dir, exist_ok = True)
     all_ims, num, ids = sinogram_main(args)
-    star_file  = star_writer.create(ids)
+    star_file  = star_writer.create(ids, clic_dir)
     
     args.num = num  # Update with lowest num
     lines_reddim = fitmodel(all_ims, args.model, args.num_comps)
-    plot(lines_reddim, args.num)
+    plot(lines_reddim, args.num, clic_dir)
 
     '''
     """
@@ -128,4 +130,4 @@ if __name__ == '__main__':
     discrete.plot(group_lines, lines_reddim)
     '''
 
-    clustering_main(lines_reddim, args, star_file)
+    clustering_main(lines_reddim, args, star_file, clic_dir)
