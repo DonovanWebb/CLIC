@@ -44,7 +44,8 @@ if __name__ == '__main__':
     z_row = list(table[0])[2:]
     it = from_z(z_row, z_cut)
     im_names = [x for x in clic_block.find_values(f'_path')][1:]
-    classes = [int(x) for x in clic_block.find_values(f'_it{it}')][1:]
+    vals = list(clic_block.find_values(f'_it{it}'))[1:]
+    classes = [int(x) for x in vals]
     # dict of classes and members (rln index)
     cl_dict = {i : [] for i in set(classes)}
 
