@@ -55,8 +55,22 @@ def plot_hist(dists, name):
             plt.bar(center, hist, align='center', width=width)
 
 
+def cap_cluster(cl):
+    ''' For speed up and to save memory. Caps cluster size to
+    N particles (with 120 lines each) '''
+    N = 500
+    len_cl = np.shape(cl)[0]
+
+    if len_cl > N*120:  # For speed up and save mem.
+        rand_selection = np.random.randint(0, len_cl, N*120)
+        cl = cl[rand_selection]
+    return cl
+
 def find_score(clX, clY, name):
     ''' find score between two clusters '''
+    clX = cap_cluster(clX)
+    clY = cap_cluster(clY)
+            
     paired_dists = eucl_dist(clX, clY)
     paired_dists = paired_dists.ravel()
     dists = 1/paired_dists
