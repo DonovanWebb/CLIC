@@ -25,6 +25,8 @@ import matplotlib.pyplot as plt
 from scipy.cluster.hierarchy import dendrogram
 import star_writer
 
+import time
+
 
 def debug_p(msg):
     pass
@@ -58,10 +60,10 @@ def plot_hist(dists, name):
 def cap_cluster(cl):
     ''' For speed up and to save memory. Caps cluster size to
     N particles (with 120 lines each) '''
-    N = 500
+    N = 400
     len_cl = np.shape(cl)[0]
 
-    if len_cl > N*120:  # For speed up and save mem.
+    if len_cl >= N*120:  # For speed up and save mem.
         rand_selection = np.random.randint(0, len_cl, N*120)
         cl = cl[rand_selection]
     return cl
@@ -79,6 +81,15 @@ def find_score(clX, clY, name):
     score = np.mean(dists)
     debug_p(f'Score: {score}')
     return score
+
+
+def dist_hist(clX):
+    ''' find histogram of dists in one cluster '''
+    plt.figure(176)
+    plt.title(f'{np.shape(clX)}')
+    paired_dists = eucl_dist(clX, clX)
+    plt.hist(paired_dists.ravel(), bins='auto')
+    plt.show()
 
 
 def find_scoretable(cluster_dict, cluster_labels):
@@ -147,6 +158,42 @@ def update_scores(cluster_dict, p0, num_clusters, cluster_labels, scoretable):
     return scoretable
 
 
+def update_scores_quick(cluster_dict, pointsab, pointsp, num_clusters, cluster_labels, scoretable):
+    ''' fill in new empty scoretable slots  trying new method'''
+    # add empty row
+    len_sc = np.shape(scoretable)[0] + 1
+    scoretable_e = np.zeros((len_sc, len_sc))
+    # fill top left with original scoretable missing new entry
+    scoretable_e[:-1, :-1] = scoretable
+    scoretable = scoretable_e
+
+    a, b = pointsab  # ind of score table max
+    p0, p1 = pointsp # cl labels for merging groups
+    clX = cluster_dict[p0]
+    lenX = np.shape(clX)[0]
+    clY = cluster_dict[p1]
+    lenY = np.shape(clY)[0]
+    for Z in range(np.shape(scoretable)[0]):
+        if Z == a or Z == b:  # dont update own?
+            continue
+        else:
+            scoresZ = scoretable[Z]
+            scoreX = scoresZ[a]
+            scoreY = scoresZ[b]
+            score = (lenX * scoreX + lenY * scoreY) / (lenX + lenY)
+            scoretable[Z, -1] = score
+            scoretable[-1, Z] = score
+    # delete paired
+    if a > b:  x = b;  y = a
+    else:  x = a;  y = b
+    # clear rows in order to update
+    scoretable = np.delete(scoretable, x, 0)
+    scoretable = np.delete(scoretable, y-1, 0)
+    scoretable = np.delete(scoretable, x, 1)
+    scoretable = np.delete(scoretable, y-1, 1)
+    return scoretable
+
+
 def update_cl(cluster_dict, scoretable, cluster_labels, Z, Z_corr):
     score = np.max(scoretable)
     a, b = np.where(scoretable == score)
@@ -159,18 +206,23 @@ def update_cl(cluster_dict, scoretable, cluster_labels, Z, Z_corr):
     debug_p(f'paired {paired}')
     p0 = np.min(paired)  # By convention new group name is lowest of two
     p1 = np.max(paired)
-    new_group = np.concatenate((cluster_dict[p0],
-                                cluster_dict[p1]))
-    debug_p(f'before merge {cluster_dict[p0].shape}')
-    cluster_dict[p0] = new_group
-    debug_p(f'after merge {cluster_dict[p0].shape}')
-    del cluster_dict[p1]  # is this needed? save memory, but slow down running
 
     cluster_labels = update_clusterlabels(cluster_labels, p0, p1)
     num_clusters = len(cluster_labels)
-    scoretable = update_scoretable(scoretable, a, b, num_clusters)
-    scoretable = update_scores(cluster_dict, p0, num_clusters,
-                               cluster_labels, scoretable)
+    scoretable = update_scores_quick(cluster_dict, (a, b), paired, num_clusters,
+                                         cluster_labels, scoretable)
+
+    # update cluster dict
+    new_group = np.concatenate((cluster_dict[p0],
+                                cluster_dict[p1]))
+    cluster_dict[p0] = new_group
+    del cluster_dict[p1]  # is this needed? save memory, but slow down running
+
+    # OLD Method ##
+    # scoretable = update_scoretable(scoretable, a, b, num_clusters)
+    # scoretable = update_scores(cluster_dict, p0, num_clusters,
+    #                            cluster_labels, scoretable)
+    # ## 
 
     debug_p(f'{(scoretable*100).astype(int)}')
 
@@ -224,17 +276,6 @@ def print_clusters(clusters, count, large_merges, paired):
     return cl, clusters, count, large_merges
 
 
-def cluster_score(cl):
-    ''' Given groundtruth dset of 0101010101, what is accuracy '''
-    gt = np.array([0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1])
-    score = 0
-    for row in cl:
-        for i in range(row.shape[0]):
-            if row[i] != gt[i] and row[i] != gt[i]+2:
-                score += 1
-    return score
-
-
 def clustering_main(lines, config, star_file, clic_dir):
     cl_labels = list(range(config.num))
     print(cl_labels)
@@ -243,13 +284,13 @@ def clustering_main(lines, config, star_file, clic_dir):
     all_paired = []
     Z = []  # Linkage matrix for drawing dendrogram
     Z_corr = list(range(config.num))
-    all_cl_score = []
     for i in range(config.num - 1):
+        timer_iter = time.time()
         cl_dict, scoretable, cl_labels, paired, Z, Z_corr, z_score = update_cl(cl_dict, scoretable,
                                                                       cl_labels, Z, Z_corr)
-        print(paired)  # To see which are paired
+        # print(paired)  # To see which are paired
         all_paired.append(paired)
-        print(cl_labels)  # To see current clusters
+        # print(cl_labels)  # To see current clusters
         if i == 0:  # First pass
             clusters = np.array(list(range(config.num)))
             count = {x: 1 for x in range(config.num)}
@@ -258,14 +299,17 @@ def clustering_main(lines, config, star_file, clic_dir):
         else:
             cl, clusters, count, large_merges = print_clusters(
                 clusters, count, large_merges, paired)
-        print(cl)  # To see which assignment to clusters
+        # print(cl)  # To see which assignment to clusters
         star_file = star_writer.update(star_file, cl, i, z_score, clic_dir)
-        # append to txt file
-        # cl_score = cluster_score(cl)  # Only works with binary test
-        # print(cl_score)
-        # all_cl_score.append(cl_score)
-    print(large_merges)
-    # print(np.min(all_cl_score))
+        print(f"{i}: {time.time() - timer_iter}")
+        # ### dist hist
+        # N = 10
+        # for cl_i in cl_dict:
+        #     cl_ar = cl_dict[cl_i]
+        #     if np.shape(cl_ar)[0] >= N * 120:
+        #         dist_hist(cl_ar)
+        # ###
+    np.save(f"{clic_dir}/large_merges", large_merges)
 
     fig = plt.figure(figsize=(25, 10))
     dn = dendrogram(Z)
