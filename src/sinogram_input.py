@@ -108,7 +108,8 @@ def gblur(im):
 
 def pre_process(im, config):
     # im = stand_image(im)
-    # im = add_noise(im, config.snr)
+    if config.snr != -1:
+        im = add_noise(im, config.snr)
     '''
     # optional displaying (for debug)
     import matplotlib.pyplot as plt
