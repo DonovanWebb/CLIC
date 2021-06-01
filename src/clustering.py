@@ -87,7 +87,9 @@ def find_score(clX, clY, name):
     perhaps gaussian?
     dists = e**(-a*paired_dists**2)
     """
-    dists = (1/(1+paired_dists))**30
+    #dists = (1/(1+paired_dists))**10
+    dists = np.e**(-200*paired_dists**2)
+    #dists = (1/(paired_dists))
     # plot_hist(dists, name)
     score = np.mean(dists)
     debug_p(f'Score: {score}')
