@@ -174,7 +174,12 @@ def sinogram_main(config):
             im_loc = locations[x]
             (ind, stack_loc) = im_loc.split('@')
             stack = load_mrc(stack_loc)
-            im = stack[int(ind) - 1]  # Rln stack starts at 1!
+            # if only one im present in stack
+            if stack.ndim == 2:
+                im = stack
+            else:
+                im = stack[int(ind) - 1]  # Rln stack starts at 1!
+
             ids.append(f'{im_loc}')
 
         if x == 0:  # first pass makes all_sinos
