@@ -311,9 +311,9 @@ def clustering_main(lines, config, star_file, clic_dir):
         # ###
     np.save(f"{clic_dir}/large_merges", large_merges)
 
+    np.save(f"{clic_dir}/dendrogram", Z)
     fig = plt.figure(figsize=(25, 10))
     dn = dendrogram(Z)
-    np.save(f"{clic_dir}/dendrogram", Z)
     # Add color to dendro
     colors = ['r', 'b', 'g', 'yellow', 'purple', 'brown']
     ax = plt.gca()

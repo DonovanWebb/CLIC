@@ -79,6 +79,7 @@ def circular_mask(im):
     h, w = im.shape
     center = (int(w/2), int(h/2))
     radius = min(center[0], center[1], w-center[0], h-center[1])
+    radius = 27
     Y, X = np.ogrid[:h, :w]
     dist_from_center = np.sqrt((X - center[0])**2 + (Y-center[1])**2)
     mask = dist_from_center <= radius
@@ -173,13 +174,18 @@ def sinogram_main(config):
             im_loc = locations[x]
             (ind, stack_loc) = im_loc.split('@')
             stack = load_mrc(stack_loc)
-            im = stack[int(ind) - 1]  # Rln stack starts at 1!
+            # if only one im present in stack
+            if stack.ndim == 2:
+                im = stack 
+            else:
+                im = stack[int(ind) - 1]  # Rln stack starts at 1!
             ids.append(f'{im_loc}')
 
         if x == 0:  # first pass makes all_sinos
             ds_size = im.shape[0] // config.down_scale
             all_sinos = np.zeros((n, config.nlines, ds_size))
 
+        print(f'{x, im_loc}')
         sino = pre_process(im, config)
         all_sinos[x] = sino
 
