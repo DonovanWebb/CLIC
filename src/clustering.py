@@ -87,8 +87,8 @@ def find_score(clX, clY, name):
     perhaps gaussian?
     dists = e**(-a*paired_dists**2)
     """
-    #dists = (1/(1+paired_dists))**10
-    dists = np.e**(-200*paired_dists**2)
+    dists = (1/(1+paired_dists))**30
+    #dists = np.e**(-200*paired_dists**2)
     #dists = (1/(paired_dists))
     # plot_hist(dists, name)
     score = np.mean(dists)
@@ -326,33 +326,40 @@ def clustering_main(lines, config, clic_dir, ids):
         #     if np.shape(cl_ar)[0] >= N * 120:
         #         dist_hist(cl_ar)
         # ###
+
     star_writer.end_write(tags, table, z_score_list, clic_dir, ids)
     np.save(f"{clic_dir}/large_merges", large_merges)
 
     fig = plt.figure(figsize=(25, 10))
     dn = dendrogram(Z)
     np.save(f"{clic_dir}/dendrogram", Z)
-    # Add color to dendro labels
+
     ax = plt.gca()
-    xlbls = ax.get_xmajorticklabels()
-    ### Check for binary simualted data ###
-    ids_ints = ids_to_int(ids)
-    gt_ids_bin = [x % 2 for x in ids_ints]
-    for lbl in xlbls:
-        if gt_ids_bin[int(lbl.get_text())] == 0:
-            lbl.set_color('r')
-        else:
-            lbl.set_color('b')
+
+    do_bin_test = False
+    if do_bin_test:
+        # Add color to dendro labels
+        xlbls = ax.get_xmajorticklabels()
+        ### Check for binary simualted data ###
+        ids_ints = ids_to_int(ids)
+        gt_ids_bin = [x % 2 for x in ids_ints]
+        for lbl in xlbls:
+            if gt_ids_bin[int(lbl.get_text())] == 0:
+                lbl.set_color('r')
+            else:
+                lbl.set_color('b')
+
+        # Perform cut on binary
+        merge_score = [min(x[1]) for x in large_merges]
+        bin_merge_ind = merge_score.index(max(merge_score))
+        bin_merge = large_merges[bin_merge_ind]
+        z_cut = bin_merge[2]*0.999  # must go below last merge
+        import bin_test
+        exp_ids_bin = bin_test.cut(table, z_score_list, z_cut)
+        score = score_bins(gt_ids_bin, exp_ids_bin)
+        print(score)
+
     plt.savefig(f"{clic_dir}/dendrogram.pdf")
-    # Perform cut on binary
-    merge_score = [min(x[1]) for x in large_merges]
-    bin_merge_ind = merge_score.index(max(merge_score))
-    bin_merge = large_merges[bin_merge_ind]
-    z_cut = bin_merge[2]*0.999 # must go below last merge
-    import bin_test
-    exp_ids_bin = bin_test.cut(table, z_score_list, z_cut)
-    score = score_bins(gt_ids_bin, exp_ids_bin)
-    print(score)
 
 
 
