@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 '''
 Main file for CLIC algorithm.
 Config options can be set at the top and the jobs to be run can be seen at the
@@ -16,7 +17,6 @@ import plt_truth
 import discrete
 import sin_guesser
 import argparse
-
 
 # Other dependencies
 from skimage.transform import radon, resize
@@ -41,7 +41,7 @@ t = ''' Number of projections to consider. Defaults to 1000 '''
 parser.add_argument("-n", "--num", help=t, default=1000, type=int)
 
 t = ''' Signal to noise ratio of projection before making sinograms '''
-parser.add_argument("-r", "--snr", help=t, default=1, type=float)
+parser.add_argument("-r", "--snr", help=t, default=-1, type=float)
 
 t = ''' Downscaling of image prior to making sinograms '''
 parser.add_argument("-d", "--down_scale", help=t, default=2, type=int)
@@ -103,6 +103,7 @@ def plot(lines_reddim, num, clic_dir):
 
 
 if __name__ == '__main__':
+    start = time.time()
 
     time_stamp = time.strftime("%Y%m%d-%H%M%S")
     clic_dir = f'CLIC_Job_{time_stamp}'
@@ -130,4 +131,6 @@ if __name__ == '__main__':
     discrete.plot(group_lines, lines_reddim)
     '''
 
-    clustering_main(lines_reddim, args, star_file, clic_dir)
+    clustering_main(lines_reddim, args, clic_dir, ids)
+    print(time.time() - start)
+    # plt.show()

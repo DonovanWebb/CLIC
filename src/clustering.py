@@ -75,8 +75,21 @@ def find_score(clX, clY, name):
             
     paired_dists = eucl_dist(clX, clY)
     paired_dists = paired_dists.ravel()
-    dists = 1/paired_dists
+    """ options :
+    negtive power of x,
+    dists = 1/(paired_dists)
+    negative power of x+1 (this caps to 1),
+    dists = 1/(1+paired_dists)
+    top i values,
     #dists[np.where(dists <= 0.05)] = 0
+    log curve,
+    dists = e**(-a*paired_dists)
+    perhaps gaussian?
+    dists = e**(-a*paired_dists**2)
+    """
+    dists = (1/(1+paired_dists))**30
+    #dists = np.e**(-200*paired_dists**2)
+    #dists = (1/(paired_dists))
     # plot_hist(dists, name)
     score = np.mean(dists)
     debug_p(f'Score: {score}')
@@ -251,7 +264,7 @@ def print_clusters_all(num, all_paired):
     return clusters
 
 
-def print_clusters(clusters, count, large_merges, paired):
+def print_clusters(clusters, count, large_merges, paired, config, z_score):
     # Takes one paired at a time
     s1, s2 = paired
     c1 = clusters[s1]
@@ -260,8 +273,8 @@ def print_clusters(clusters, count, large_merges, paired):
     count1 = count[c1]
     count2 = count[c2]
     merge_size = min(count1, count2)
-    if merge_size > 3:
-        large_merges.append([c1, c2, count1, count2])
+    if merge_size > 0.1*config.num:
+        large_merges.append([(c1, c2), (count1, count2), z_score])
 
     # update clusters by merging two
     if c1 < c2:
@@ -276,32 +289,36 @@ def print_clusters(clusters, count, large_merges, paired):
     return cl, clusters, count, large_merges
 
 
-def clustering_main(lines, config, star_file, clic_dir):
+def clustering_main(lines, config, clic_dir, ids):
     cl_labels = list(range(config.num))
-    print(cl_labels)
     cl_dict = initial_dict(lines, config.num)
     scoretable = find_scoretable(cl_dict, cl_labels)
     all_paired = []
     Z = []  # Linkage matrix for drawing dendrogram
     Z_corr = list(range(config.num))
+    tags = ['_id', '_path']  # tags for star file
+    z_score_list = []  # tags for star file
+    table = np.ndarray((config.num, config.num -1), dtype=object)
+
     for i in range(config.num - 1):
         timer_iter = time.time()
         cl_dict, scoretable, cl_labels, paired, Z, Z_corr, z_score = update_cl(cl_dict, scoretable,
                                                                       cl_labels, Z, Z_corr)
-        # print(paired)  # To see which are paired
         all_paired.append(paired)
-        # print(cl_labels)  # To see current clusters
+
         if i == 0:  # First pass
             clusters = np.array(list(range(config.num)))
             count = {x: 1 for x in range(config.num)}
             cl, clusters, count, large_merges = print_clusters(
-                clusters, count, [], paired)
+                clusters, count, [], paired, config, z_score)
         else:
             cl, clusters, count, large_merges = print_clusters(
-                clusters, count, large_merges, paired)
-        # print(cl)  # To see which assignment to clusters
-        star_file = star_writer.update(star_file, cl, i, z_score, clic_dir)
-        print(f"{i}: {time.time() - timer_iter}")
+                clusters, count, large_merges, paired, config, z_score)
+
+        z_score_list.append(f'{z_score}')
+        tags, table = star_writer.update_data(tags, cl, table, i)
+
+        #print(f"{i}: {time.time() - timer_iter}")
         # ### dist hist
         # N = 10
         # for cl_i in cl_dict:
@@ -309,18 +326,64 @@ def clustering_main(lines, config, star_file, clic_dir):
         #     if np.shape(cl_ar)[0] >= N * 120:
         #         dist_hist(cl_ar)
         # ###
+
+    star_writer.end_write(tags, table, z_score_list, clic_dir, ids)
     np.save(f"{clic_dir}/large_merges", large_merges)
 
     np.save(f"{clic_dir}/dendrogram", Z)
     fig = plt.figure(figsize=(25, 10))
     dn = dendrogram(Z)
-    # Add color to dendro
-    colors = ['r', 'b', 'g', 'yellow', 'purple', 'brown']
+    np.save(f"{clic_dir}/dendrogram", Z)
+
     ax = plt.gca()
-    xlbls = ax.get_xmajorticklabels()
-    for lbl in xlbls:
-        for x in range(2):
-            if int(lbl.get_text()) % 2 == x:
-                lbl.set_color(colors[int(x)])
+
+    do_bin_test = False
+    if do_bin_test:
+        # Add color to dendro labels
+        xlbls = ax.get_xmajorticklabels()
+        ### Check for binary simualted data ###
+        ids_ints = ids_to_int(ids)
+        gt_ids_bin = [x % 2 for x in ids_ints]
+        for lbl in xlbls:
+            if gt_ids_bin[int(lbl.get_text())] == 0:
+                lbl.set_color('r')
+            else:
+                lbl.set_color('b')
+
+        # Perform cut on binary
+        merge_score = [min(x[1]) for x in large_merges]
+        bin_merge_ind = merge_score.index(max(merge_score))
+        bin_merge = large_merges[bin_merge_ind]
+        z_cut = bin_merge[2]*0.999  # must go below last merge
+        import bin_test
+        exp_ids_bin = bin_test.cut(table, z_score_list, z_cut)
+        score = score_bins(gt_ids_bin, exp_ids_bin)
+        print(score)
+
     plt.savefig(f"{clic_dir}/dendrogram.pdf")
-    plt.show()
+
+
+
+def score_bins(gt, exp):
+    assert(len(gt) == len(exp))
+    # case 1: gt and exp assigned the same
+    score1 = 0
+    score2 = 0
+    score_no_class = 0
+    for i in range(len(gt)):
+        if gt[i] == exp[i]:
+            score1 += 1
+        # case 2: gt and exp assigned opp
+        if gt[i] + exp[i] == 1:
+            score2 += 1
+        if exp[i] == -1:
+            score_no_class += 1
+    return (max(score1, score2)/len(gt), score_no_class/len(gt))
+
+
+def ids_to_int(ids):
+    import os
+    ints = [os.path.basename(x) for x in ids]
+    ints = [os.path.splitext(x)[0] for x in ints]
+    ints = [int(x) for x in ints]
+    return ints
