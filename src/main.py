@@ -57,6 +57,9 @@ t = ''' Number of lines in one sinogram (shouldn't need to change
 recommended=120)'''
 parser.add_argument("-l", "--nlines", help=t, default=120, type=int)
 
+t = ''' Run on gpu with CUDA '''
+parser.add_argument("-g", "--gpu", help=t, default=False, action='store_true')
+
 args = parser.parse_args()
 
 
