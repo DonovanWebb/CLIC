@@ -24,6 +24,9 @@ from sklearn.metrics.pairwise import euclidean_distances as eucl_dist
 import matplotlib.pyplot as plt
 from scipy.cluster.hierarchy import dendrogram
 import star_writer
+import numba
+from numba import cuda
+import math
 
 import time
 
@@ -127,6 +130,29 @@ def find_scoretable(cluster_dict, cluster_labels):
                 clY = cluster_dict[cluster_labels[Y]]
                 scoretable[X, Y] = find_score(clX, clY, (X, Y))
     return scoretable
+
+
+@cuda.jit
+def find_sctbl_cuda(a, d):
+    ''' 
+    finding sc table using cuda
+    a is output grid, d is all sino data
+    '''
+    i, j = cuda.grid(2)
+    if (i < a.shape[0]) and (j < a.shape[1]):
+        # find cluster arrays
+        clX = d[i]
+        clY = d[j]
+        tot_score = 0
+        for l1 in clX:
+            for l2 in clY:
+                # find eucl dist
+                dist = 0
+                for x in range(len(l1)):
+                    dist += (l1[x] - l2[x])**2
+                dist = math.sqrt(dist)
+                tot_score += 1/(1+dist)**30
+        a[i, j] = tot_score
 
 
 def update_scoretable(scoretable, a, b, num_clusters):
@@ -293,7 +319,15 @@ def clustering_main(lines, config, clic_dir, ids):
     cl_labels = list(range(config.num))
     cl_dict = initial_dict(lines, config.num)
     timer_sc_tbl = time.time()
-    scoretable = find_scoretable(cl_dict, cl_labels)
+    # scoretable = find_scoretable(cl_dict, cl_labels)  # old method
+    sino_d = np.reshape(lines, (config.num, config.nlines, config.num_comps))
+    scoretable = np.zeros((config.num, config.num))
+    # Set up enough threads for kernel
+    threadsperblock = (16, 16)
+    blockspergrid_x = (config.num + threadsperblock[0]) // threadsperblock[0]
+    blockspergrid_y = (config.num + threadsperblock[1]) // threadsperblock[1]
+    blockspergrid = (blockspergrid_x, blockspergrid_y)
+    find_sctbl_cuda[blockspergrid, threadsperblock](scoretable, sino_d)
     print(f"sctable time: {(time.time() - timer_sc_tbl)}")
     all_paired = []
     Z = []  # Linkage matrix for drawing dendrogram
