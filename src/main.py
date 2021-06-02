@@ -28,6 +28,12 @@ import time
 import gemmi
 import os
 
+import sys
+
+if not sys.warnoptions:
+    import warnings
+    warnings.simplefilter("ignore")
+
 
 parser = argparse.ArgumentParser()
 
