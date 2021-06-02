@@ -324,7 +324,7 @@ def clustering_main(lines, config, clic_dir, ids):
     cl_dict = initial_dict(lines, config.num)
     timer_sc_tbl = time.time()
     if config.gpu:
-        sino_d = np.reshape(lines, (config.num, config.nlines, config.num_comps))
+        sino_d = np.reshape(np.ascontiguousarray(lines), (config.num, config.nlines, config.num_comps))
         scoretable = np.zeros((config.num, config.num))
         # Set up enough threads for kernel
         threadsperblock = (16, 16)
