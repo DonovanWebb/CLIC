@@ -186,7 +186,6 @@ def sinogram_main(config):
             ds_size = im.shape[0] // config.down_scale
             all_sinos = np.zeros((n, config.nlines, ds_size))
 
-        print(f'{x, im_loc}')
         sino = pre_process(im, config)
         all_sinos[x] = sino
 

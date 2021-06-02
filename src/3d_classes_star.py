@@ -52,13 +52,13 @@ if __name__ == '__main__':
 
     relion_star = gemmi.cif.read_file(relion_file)
     relion_block = relion_star.find_block('particles')
-    all_parts = [x for x in relion_block.find_values(f'_rlnimagename')][1:]
+    all_parts = [x for x in relion_block.find_values(f'_rlnimagename')][0:]
 
 
     for x in range(len(im_names)):
         im = im_names[x]
         im_class = classes[x]
-        rln_ind = all_parts.index(im) + 1
+        rln_ind = all_parts.index(im)
         mems = cl_dict[im_class]
         mems.append(rln_ind)
         cl_dict[im_class] = mems

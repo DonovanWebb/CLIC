@@ -292,7 +292,9 @@ def print_clusters(clusters, count, large_merges, paired, config, z_score):
 def clustering_main(lines, config, clic_dir, ids):
     cl_labels = list(range(config.num))
     cl_dict = initial_dict(lines, config.num)
+    timer_sc_tbl = time.time()
     scoretable = find_scoretable(cl_dict, cl_labels)
+    print(f"sctable time: {(time.time() - timer_sc_tbl)}")
     all_paired = []
     Z = []  # Linkage matrix for drawing dendrogram
     Z_corr = list(range(config.num))
@@ -300,8 +302,9 @@ def clustering_main(lines, config, clic_dir, ids):
     z_score_list = []  # tags for star file
     table = np.ndarray((config.num, config.num -1), dtype=object)
 
+
+    timer_cl = time.time()
     for i in range(config.num - 1):
-        timer_iter = time.time()
         cl_dict, scoretable, cl_labels, paired, Z, Z_corr, z_score = update_cl(cl_dict, scoretable,
                                                                       cl_labels, Z, Z_corr)
         all_paired.append(paired)
@@ -318,7 +321,6 @@ def clustering_main(lines, config, clic_dir, ids):
         z_score_list.append(f'{z_score}')
         tags, table = star_writer.update_data(tags, cl, table, i)
 
-        #print(f"{i}: {time.time() - timer_iter}")
         # ### dist hist
         # N = 10
         # for cl_i in cl_dict:
@@ -326,6 +328,7 @@ def clustering_main(lines, config, clic_dir, ids):
         #     if np.shape(cl_ar)[0] >= N * 120:
         #         dist_hist(cl_ar)
         # ###
+    print(f"clustering/N: {(time.time() - timer_cl)/config.num}")
 
     star_writer.end_write(tags, table, z_score_list, clic_dir, ids)
     np.save(f"{clic_dir}/large_merges", large_merges)
