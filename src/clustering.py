@@ -144,8 +144,10 @@ def find_sctbl_cuda(a, d):
         clX = d[i]
         clY = d[j]
         tot_score = 0
-        for l1 in clX:
-            for l2 in clY:
+        for iter1 in range(clX.shape[0]):
+            l1 = clX[iter1]
+            for iter2 in range(clY.shape[0]):
+                l2 = clY[iter2]
                 # find eucl dist
                 dist = 0
                 for x in range(len(l1)):
