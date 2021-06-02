@@ -139,7 +139,9 @@ def find_sctbl_cuda(a, d):
     a is output grid, d is all sino data
     '''
     i, j = cuda.grid(2)
-    if (i < a.shape[0]) and (j < a.shape[1]):
+    if i == j:
+        a[i, j] = 0
+    elif (i < a.shape[0]) and (j < a.shape[1]):
         # find cluster arrays
         clX = d[i]
         clY = d[j]
