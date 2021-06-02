@@ -319,15 +319,17 @@ def clustering_main(lines, config, clic_dir, ids):
     cl_labels = list(range(config.num))
     cl_dict = initial_dict(lines, config.num)
     timer_sc_tbl = time.time()
-    # scoretable = find_scoretable(cl_dict, cl_labels)  # old method
-    sino_d = np.reshape(lines, (config.num, config.nlines, config.num_comps))
-    scoretable = np.zeros((config.num, config.num))
-    # Set up enough threads for kernel
-    threadsperblock = (16, 16)
-    blockspergrid_x = (config.num + threadsperblock[0]) // threadsperblock[0]
-    blockspergrid_y = (config.num + threadsperblock[1]) // threadsperblock[1]
-    blockspergrid = (blockspergrid_x, blockspergrid_y)
-    find_sctbl_cuda[blockspergrid, threadsperblock](scoretable, sino_d)
+    if config.gpu:
+        sino_d = np.reshape(lines, (config.num, config.nlines, config.num_comps))
+        scoretable = np.zeros((config.num, config.num))
+        # Set up enough threads for kernel
+        threadsperblock = (16, 16)
+        blockspergrid_x = (config.num + threadsperblock[0]) // threadsperblock[0]
+        blockspergrid_y = (config.num + threadsperblock[1]) // threadsperblock[1]
+        blockspergrid = (blockspergrid_x, blockspergrid_y)
+        find_sctbl_cuda[blockspergrid, threadsperblock](scoretable, sino_d)
+    else:
+        scoretable = find_scoretable(cl_dict, cl_labels)  # old method
     print(f"sctable time: {(time.time() - timer_sc_tbl)}")
     all_paired = []
     Z = []  # Linkage matrix for drawing dendrogram
