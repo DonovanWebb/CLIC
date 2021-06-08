@@ -108,18 +108,18 @@ def gblur(im):
 
 
 def pre_process(im, config):
-    # im = stand_image(im)
+    #im = stand_image(im)
     if config.snr != -1:
         im = add_noise(im, config.snr)
-    '''
     # optional displaying (for debug)
+    """
     import matplotlib.pyplot as plt
     plt.imshow(im, cmap='gray')
     plt.axis('off')
     plt.show()
-    '''
+    """
     im = downscale(im, config.down_scale)
-    im = stand_image(im)
+    #im = stand_image(im)
     im = circular_mask(im)
     sino = make_sinogram(im, config.nlines)
     '''
@@ -162,13 +162,35 @@ def sinogram_main(config):
     print(f"Will use {n} particles")
 
     ids = []
+    do_subset_test = True
+    i = 0  # for subset test
+    perc = 0.8  # for subset test
+    c0 = 0
+    c1 = 0
     for x in range(n):
 
         if dset_path.endswith('.mrcs'):
             im = classes[x]
             ids.append(f'{x+1}@{dset_path}')
         elif dset_path.endswith('mrc'):
-            im_path = all_files[x]
+            if do_subset_test == True:
+                # subset test:
+                import os
+                while True:
+                    im_path = all_files[x+i]
+                    im_class = os.path.basename(im_path)
+                    im_class = int(os.path.splitext(im_class)[0])
+                    rand = np.random.rand(1)
+                    if rand > perc and im_class % 2 == 0:
+                        c0 += 1
+                        break
+                    elif rand < perc and im_class % 2 == 1:
+                        c1 += 1
+                        break
+                    else:
+                        i += 1
+            else:
+                    im_path = all_files[x]
             im = load_mrc(im_path)
             ids.append(f'{im_path}')
         elif dset_path.endswith('star'):
@@ -189,4 +211,5 @@ def sinogram_main(config):
         sino = pre_process(im, config)
         all_sinos[x] = sino
 
+    print(c0/n, c1/n)
     return all_sinos, n, ids

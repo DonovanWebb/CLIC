@@ -21,29 +21,32 @@ def split_sinos(sinos):
     return lines
 
 
-def fitmodel(sinos, model, num_comps):
+def fitmodel(sinos, model_choice, num_comps):
     # LINEAR
-    if model == 'PCA':
+    if model_choice == 'PCA_skip':
+        from sklearn.decomposition import PCA
+        model = PCA(n_components=num_comps+1)
+    elif model_choice == 'PCA':
         from sklearn.decomposition import PCA
         model = PCA(n_components=num_comps)
     # MANIFOLDS
-    elif model == 'ISOMAP':
+    elif model_choice == 'ISOMAP':
         from sklearn.manifold import Isomap
         model = Isomap(n_components=num_comps)
-    elif model == 'LLE':
+    elif model_choice == 'LLE':
         from sklearn.manifold import LocallyLinearEmbedding as LLE
         model = LLE(n_components=num_comps, n_neighbors=5)
-    elif model == 'MDS':
+    elif model_choice == 'MDS':
         from sklearn.manifold import MDS
         model = MDS(n_components=num_comps)
-    elif model == 'TSNE':
+    elif model_choice == 'TSNE':
         from sklearn.manifold import TSNE
         model = TSNE(n_components=num_comps)
-    elif model == 'UMAP':
+    elif model_choice == 'UMAP':
         import umap
         model = umap.UMAP(n_neighbors=5, min_dist=0.3,
                           n_components=num_comps)
-    elif model == 'TRIMAP':
+    elif model_choice == 'TRIMAP':
         import trimap
         model = trimap.TRIMAP(n_iters=1000)
 
@@ -54,5 +57,8 @@ def fitmodel(sinos, model, num_comps):
     print(f'Time to Train model : {end_train-start_train}')
 
     comp_var(sinos_trans)
+
+    if model_choice == 'PCA_skip':
+        sinos_trans = sinos_trans[:,1:]
 
     return sinos_trans
