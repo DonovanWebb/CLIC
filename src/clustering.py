@@ -319,6 +319,12 @@ def print_clusters(clusters, count, large_merges, paired, config, z_score):
     cl = clusters
     return cl, clusters, count, large_merges
 
+def center_sctble(scoretable, config):
+    mean = np.mean(scoretable)
+    std = np.std(scoretable)
+    scoretable = scoretable/mean
+    return scoretable
+
 
 def clustering_main(lines, config, clic_dir, ids):
     cl_labels = list(range(config.num))
@@ -339,7 +345,9 @@ def clustering_main(lines, config, clic_dir, ids):
         scoretable = d_scoretable.copy_to_host()
     else:
         scoretable = find_scoretable(cl_dict, cl_labels)  # old method
-    #print(f"sctable time: {(time.time() - timer_sc_tbl)}")
+    # Normalize scoretable
+    scoretable = center_sctble(scoretable, config)
+    print(f"sctable time: {(time.time() - timer_sc_tbl)}")
     all_paired = []
     Z = []  # Linkage matrix for drawing dendrogram
     Z_corr = list(range(config.num))

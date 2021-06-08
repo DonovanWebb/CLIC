@@ -141,5 +141,5 @@ if __name__ == '__main__':
     '''
 
     clustering_main(lines_reddim, args, clic_dir, ids)
-    #print(time.time() - start)
-    # plt.show()
+    print(time.time() - start)
+    plt.show()
