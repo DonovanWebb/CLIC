@@ -155,7 +155,8 @@ def find_sctbl_cuda(a, d):
                 for x in range(len(l1)):
                     dist += (l1[x] - l2[x])**2
                 dist = math.sqrt(dist)
-                tot_score += 1/(1+dist)**30
+                #tot_score += 1/(1+dist)**30
+                tot_score += 1/dist
         a[i, j] = tot_score
 
 
@@ -202,7 +203,7 @@ def update_scores(cluster_dict, p0, num_clusters, cluster_labels, scoretable):
 
 
 def update_scores_quick(cluster_dict, pointsab, pointsp, num_clusters, cluster_labels, scoretable):
-    ''' fill in new empty scoretable slots  trying new method'''
+    ''' fill in new empty scoretable slots without finding eucl dist again'''
     # add empty row
     len_sc = np.shape(scoretable)[0] + 1
     scoretable_e = np.zeros((len_sc, len_sc))
@@ -324,17 +325,21 @@ def clustering_main(lines, config, clic_dir, ids):
     cl_dict = initial_dict(lines, config.num)
     timer_sc_tbl = time.time()
     if config.gpu:
-        sino_d = np.reshape(np.ascontiguousarray(lines), (config.num, config.nlines, config.num_comps))
-        scoretable = np.zeros((config.num, config.num))
+        sinos = np.reshape(np.ascontiguousarray(lines), (config.num, config.nlines, config.num_comps))
+        scoretable = np.zeros((config.num, config.num), dtype=np.float32)
+        # data to device
+        d_sinos = cuda.to_device(sinos)
+        d_scoretable = cuda.to_device(scoretable)
         # Set up enough threads for kernel
-        threadsperblock = (16, 16)
+        threadsperblock = (32, 32)
         blockspergrid_x = (config.num + threadsperblock[0]) // threadsperblock[0]
         blockspergrid_y = (config.num + threadsperblock[1]) // threadsperblock[1]
         blockspergrid = (blockspergrid_x, blockspergrid_y)
-        find_sctbl_cuda[blockspergrid, threadsperblock](scoretable, sino_d)
+        find_sctbl_cuda[blockspergrid, threadsperblock](d_scoretable, d_sinos)
+        scoretable = d_scoretable.copy_to_host()
     else:
         scoretable = find_scoretable(cl_dict, cl_labels)  # old method
-    print(f"sctable time: {(time.time() - timer_sc_tbl)}")
+    #print(f"sctable time: {(time.time() - timer_sc_tbl)}")
     all_paired = []
     Z = []  # Linkage matrix for drawing dendrogram
     Z_corr = list(range(config.num))
@@ -368,7 +373,7 @@ def clustering_main(lines, config, clic_dir, ids):
         #     if np.shape(cl_ar)[0] >= N * 120:
         #         dist_hist(cl_ar)
         # ###
-    print(f"clustering/N: {(time.time() - timer_cl)/config.num}")
+    #print(f"clustering/N: {(time.time() - timer_cl)/config.num}")
 
     star_writer.end_write(tags, table, z_score_list, clic_dir, ids)
     np.save(f"{clic_dir}/large_merges", large_merges)
@@ -380,7 +385,7 @@ def clustering_main(lines, config, clic_dir, ids):
 
     ax = plt.gca()
 
-    do_bin_test = False
+    do_bin_test = True
     if do_bin_test:
         # Add color to dendro labels
         xlbls = ax.get_xmajorticklabels()

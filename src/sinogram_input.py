@@ -159,7 +159,7 @@ def sinogram_main(config):
         exit()
 
     n = min(n_max, config.num)
-    print(f"Will use {n} particles")
+    #print(f"Will use {n} particles")
 
     ids = []
     for x in range(n):

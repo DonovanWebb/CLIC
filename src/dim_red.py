@@ -51,7 +51,7 @@ def fitmodel(sinos, model, num_comps):
     lines = split_sinos(sinos)
     sinos_trans = model.fit_transform(lines)
     end_train = time.time()
-    print(f'Time to Train model : {end_train-start_train}')
+    #print(f'Time to Train model : {end_train-start_train}')
 
     comp_var(sinos_trans)
 
