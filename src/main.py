@@ -121,7 +121,11 @@ if __name__ == '__main__':
     star_file  = star_writer.create(ids, clic_dir)
     
     args.num = num  # Update with lowest num
-    lines_reddim = fitmodel(all_ims, args.model, args.num_comps)
+    lines_reddim, model = fitmodel(all_ims, args.model, args.num_comps)
+    """ for generating figures for pca recon and eigenfilters """
+    import pca_recon
+    pca_recon.recon_sino(all_ims[-1], model, args)
+
     plot(lines_reddim, args.num, clic_dir)
 
     '''

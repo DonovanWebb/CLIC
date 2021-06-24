@@ -79,7 +79,6 @@ def circular_mask(im):
     h, w = im.shape
     center = (int(w/2), int(h/2))
     radius = min(center[0], center[1], w-center[0], h-center[1])
-    radius = 27
     Y, X = np.ogrid[:h, :w]
     dist_from_center = np.sqrt((X - center[0])**2 + (Y-center[1])**2)
     mask = dist_from_center <= radius
@@ -121,6 +120,9 @@ def pre_process(im, config):
     im = downscale(im, config.down_scale)
     #im = stand_image(im)
     im = circular_mask(im)
+    import matplotlib.pyplot as plt  # just for figure
+    plt.figure("original image")  # just for figure
+    plt.imshow(im, "gray")  # just for figure
     sino = make_sinogram(im, config.nlines)
     '''
     import matplotlib.pyplot as plt
@@ -162,7 +164,7 @@ def sinogram_main(config):
     #print(f"Will use {n} particles")
 
     ids = []
-    do_subset_test = True
+    do_subset_test = False
     i = 0  # for subset test
     perc = 0.8  # for subset test
     c0 = 0

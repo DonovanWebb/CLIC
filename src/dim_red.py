@@ -61,4 +61,4 @@ def fitmodel(sinos, model_choice, num_comps):
     if model_choice == 'PCA_skip':
         sinos_trans = sinos_trans[:,1:]
 
-    return sinos_trans
+    return sinos_trans, model
