@@ -11,10 +11,13 @@ def plt_comps(mapper):
 
     comps = mapper.components_
 
-    for i in range(1,comps.shape[0]):
-        plt.subplot(comps.shape[0]//10 + 1, 10, i)
+    plt.figure('Components')
+    for i in range(1, comps.shape[0]):
+        plt.subplot(comps.shape[0]//10, 10, i)
         plt.plot(comps[i-1])
-    plt.show()
+        plt.xticks([])
+        plt.yticks([])
+    plt.savefig('components.png', bbox_inches='tight')
 
 
 
@@ -41,24 +44,34 @@ def recon_sino(im, mapper, config):
 
     plt.figure("original")
     plt.imshow(sino, "gray")
+    plt.axis('off')
+    plt.savefig(f'snr{config.snr}_sino.png', bbox_inches='tight')
+
     plt.figure("recon")
     plt.imshow(sino_recon, "gray")
+    plt.axis('off')
+    plt.savefig(f'snr{config.snr}_model{config.model}_comp{config.num_comps}_recon_sino.png', bbox_inches='tight')
 
     # plt.figure("image")
     # plt.imshow(im, "gray")
     plt.figure("recon fbp image")
     plt.imshow(im_recon_fbp, "gray")
+    plt.axis('off')
+    plt.savefig(f'snr{config.snr}_model{config.model}_comp{config.num_comps}_recon_fbp.png', bbox_inches='tight')
     plt.figure("recon sart1 image")
     plt.imshow(reconstruction_sart, "gray")
+    plt.axis('off')
     plt.figure("recon sart3 image")
     plt.imshow(reconstruction_sart3, "gray")
-    plt.show()
+    plt.axis('off')
+    plt.savefig('recon_sart3.png', bbox_inches='tight')
+    plt.savefig(f'snr{config.snr}_model{config.model}_comp{config.num_comps}_recon_sart3.png', bbox_inches='tight')
 
 
-    for i in range(10):
-        plt.plot(sino[i], "red")
-        plt.plot(sino_recon[i], "green")
-        plt.show()
+    # for i in range(10):
+    #     plt.plot(sino[i], "red")
+    #     plt.plot(sino_recon[i], "green")
+    #     plt.show()
 
 
 def circular_mask(im):

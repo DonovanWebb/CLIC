@@ -106,8 +106,20 @@ def gblur(im):
     return im
 
 
-def pre_process(im, config):
-    #im = stand_image(im)
+def pre_process(im, config, n):
+    if n == config.num - 1:
+        import matplotlib.pyplot as plt  # just for figure
+        #im = stand_image(im)
+        plt.figure("original image")  # just for figure
+        plt.imshow(im, "gray")  # just for figure
+        plt.axis('off')  # just for figure
+        plt.savefig('clean_im.png', bbox_inches='tight')
+        im_ds = downscale(im, config.down_scale)  # just for figure
+        sino_clean = make_sinogram(np.array(im_ds), config.nlines)  # just for figure
+        plt.figure("clean sinogram")  # just for figure
+        plt.imshow(sino_clean, "gray")  # just for figure
+        plt.axis('off')  # just for figure
+        plt.savefig('clean_sino.png', bbox_inches='tight')
     if config.snr != -1:
         im = add_noise(im, config.snr)
     # optional displaying (for debug)
@@ -120,9 +132,11 @@ def pre_process(im, config):
     im = downscale(im, config.down_scale)
     #im = stand_image(im)
     im = circular_mask(im)
-    import matplotlib.pyplot as plt  # just for figure
-    plt.figure("original image")  # just for figure
-    plt.imshow(im, "gray")  # just for figure
+    if n == config.num - 1:
+        plt.figure("noisy image")  # just for figure
+        plt.imshow(im, "gray")  # just for figure
+        plt.axis('off')
+        plt.savefig(f'snr{config.snr}_im.png', bbox_inches='tight')
     sino = make_sinogram(im, config.nlines)
     '''
     import matplotlib.pyplot as plt
@@ -210,7 +224,7 @@ def sinogram_main(config):
             ds_size = im.shape[0] // config.down_scale
             all_sinos = np.zeros((n, config.nlines, ds_size))
 
-        sino = pre_process(im, config)
+        sino = pre_process(im, config, x)
         all_sinos[x] = sino
 
     print(c0/n, c1/n)
