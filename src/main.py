@@ -123,10 +123,10 @@ if __name__ == '__main__':
     args.num = num  # Update with lowest num
     lines_reddim, model = fitmodel(all_ims, args.model, args.num_comps)
     """ for generating figures for pca recon and eigenfilters """
-    import pca_recon
-    pca_recon.recon_sino(all_ims[-1], model, args)
+    #import pca_recon
+    #pca_recon.recon_sino(all_ims[-1], model, args)
     #pca_recon.plt_comps(model)
-    plt.show()
+    #plt.show()
 
     plot(lines_reddim, args.num, clic_dir)
 

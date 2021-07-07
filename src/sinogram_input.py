@@ -107,9 +107,10 @@ def gblur(im):
 
 
 def pre_process(im, config, n):
+    """
     if n == config.num - 1:
-        import matplotlib.pyplot as plt  # just for figure
         #im = stand_image(im)
+        import matplotlib.pyplot as plt  # just for figure
         plt.figure("original image")  # just for figure
         plt.imshow(im, "gray")  # just for figure
         plt.axis('off')  # just for figure
@@ -120,6 +121,7 @@ def pre_process(im, config, n):
         plt.imshow(sino_clean, "gray")  # just for figure
         plt.axis('off')  # just for figure
         plt.savefig('clean_sino.png', bbox_inches='tight')
+    """
     if config.snr != -1:
         im = add_noise(im, config.snr)
     # optional displaying (for debug)
@@ -132,11 +134,13 @@ def pre_process(im, config, n):
     im = downscale(im, config.down_scale)
     #im = stand_image(im)
     im = circular_mask(im)
+    """
     if n == config.num - 1:
         plt.figure("noisy image")  # just for figure
         plt.imshow(im, "gray")  # just for figure
         plt.axis('off')
         plt.savefig(f'snr{config.snr}_im.png', bbox_inches='tight')
+    """
     sino = make_sinogram(im, config.nlines)
     '''
     import matplotlib.pyplot as plt
@@ -227,5 +231,7 @@ def sinogram_main(config):
         sino = pre_process(im, config, x)
         all_sinos[x] = sino
 
-    print(c0/n, c1/n)
+    if do_subset_test == True:
+        print(c0/n, c1/n)
+
     return all_sinos, n, ids
