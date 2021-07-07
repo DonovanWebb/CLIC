@@ -70,7 +70,7 @@ args = parser.parse_args()
 
 
 
-def plot(lines_reddim, num, clic_dir):
+def plot(lines_reddim, num, clic_dir, ids):
     ''' Simple plotting of dimensionally reduced lines. Set up for dset with
     two classes (alternating) '''
     import matplotlib.pyplot as plt
@@ -98,16 +98,29 @@ def plot(lines_reddim, num, clic_dir):
 
     fig = plt.figure(3)
     ax = fig.gca(projection='3d')
-    for x in range(num):
-        if x < 160:
-            if x % 2 == 0:
-                ax.plot(lines_reddim[x*per_sino:(x+1)*per_sino, 0],
-                        lines_reddim[x*per_sino:(x+1)*per_sino:, 1],
-                        lines_reddim[x*per_sino:(x+1)*per_sino:, 2], c='r', alpha=0.4)
-            else:
-                ax.plot(lines_reddim[x*per_sino:(x+1)*per_sino, 0],
-                        lines_reddim[x*per_sino:(x+1)*per_sino:, 1],
-                        lines_reddim[x*per_sino:(x+1)*per_sino:, 2], c='b', alpha=0.4)
+
+    ints = [os.path.basename(x) for x in ids]
+    ints = [os.path.splitext(x)[0] for x in ints]
+    ids_ints = [int(x) for x in ints]
+    gt_ids_bin = [x % 2 for x in ids_ints]
+    for x in range(len(gt_ids_bin)):
+        if gt_ids_bin[x] == 0:
+            ax.plot(lines_reddim[x*per_sino:(x+1)*per_sino, 0],
+                    lines_reddim[x*per_sino:(x+1)*per_sino:, 1],
+                    lines_reddim[x*per_sino:(x+1)*per_sino:, 2], c='r', alpha=0.4)
+        else:
+            ax.plot(lines_reddim[x*per_sino:(x+1)*per_sino, 0],
+                    lines_reddim[x*per_sino:(x+1)*per_sino:, 1],
+                    lines_reddim[x*per_sino:(x+1)*per_sino:, 2], c='b', alpha=0.4)
+    plt.savefig(f"{clic_dir}/3d_plot_binary.pdf")
+
+    fig = plt.figure(5)
+    ax = fig.gca(projection='3d')
+
+    for x in range(5):
+        ax.plot(lines_reddim[x*per_sino:(x+1)*per_sino, 0],
+                lines_reddim[x*per_sino:(x+1)*per_sino:, 1],
+                lines_reddim[x*per_sino:(x+1)*per_sino:, 2], alpha=0.8)
     plt.savefig(f"{clic_dir}/3d_plot_binary.pdf")
 
 
@@ -128,7 +141,7 @@ if __name__ == '__main__':
     #pca_recon.plt_comps(model)
     #plt.show()
 
-    plot(lines_reddim, args.num, clic_dir)
+    plot(lines_reddim, args.num, clic_dir, ids)
 
     '''
     """
