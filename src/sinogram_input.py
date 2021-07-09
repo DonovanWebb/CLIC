@@ -8,6 +8,7 @@ import numpy as np
 from skimage.transform import radon, resize
 import mrcfile
 import gemmi
+import entropy_filter
 
 
 '''
@@ -124,16 +125,16 @@ def pre_process(im, config, n):
     """
     if config.snr != -1:
         im = add_noise(im, config.snr)
+    im = downscale(im, config.down_scale)
+    im = stand_image(im)
+    # im = circular_mask(im)
+    im = entropy_filter.main(im)
     # optional displaying (for debug)
-    """
     import matplotlib.pyplot as plt
+    plt.figure('masked_im')
     plt.imshow(im, cmap='gray')
     plt.axis('off')
     plt.show()
-    """
-    im = downscale(im, config.down_scale)
-    #im = stand_image(im)
-    im = circular_mask(im)
     """
     if n == config.num - 1:
         plt.figure("noisy image")  # just for figure
