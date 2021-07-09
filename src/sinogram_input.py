@@ -130,11 +130,11 @@ def pre_process(im, config, n):
     # im = circular_mask(im)
     im = entropy_filter.main(im)
     # optional displaying (for debug)
-    import matplotlib.pyplot as plt
-    plt.figure('masked_im')
-    plt.imshow(im, cmap='gray')
-    plt.axis('off')
-    plt.show()
+    # import matplotlib.pyplot as plt
+    # plt.figure('masked_im')
+    # plt.imshow(im, cmap='gray')
+    # plt.axis('off')
+    # plt.show()
     """
     if n == config.num - 1:
         plt.figure("noisy image")  # just for figure
