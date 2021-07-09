@@ -152,35 +152,78 @@ def pre_process(im, config, n):
     return sino
 
 
-def sinogram_main(config):
+def get_part_locs(config):
     dset_path = config.data_set
 
     if dset_path.endswith('.mrcs'):
         with mrcfile.open(dset_path) as f:
-            classes = f.data
-            n_max = classes.shape[0]
+            part_locs = f.data
+            n_max = part_locs.shape[0]
     elif dset_path.endswith('mrc'):
         import glob
-        all_files = glob.glob(dset_path)
-        n_max = len(all_files)
-        if all_files == []:
+        part_locs = glob.glob(dset_path)
+        n_max = len(part_locs)
+        if part_locs == []:
             print(f"Error: No mrc found in: {dset_path}")
             exit()
     elif dset_path.endswith('star'):
         # read star file to extract im locs
         starfile = gemmi.cif.read_file(dset_path)
         block = starfile.find_block('particles')
-        locations = [x for x in block.find_values(f'_rlnimagename')]
-        n_max = len(locations)
+        part_locs = [x for x in block.find_values(f'_rlnimagename')]
+        n_max = len(part_locs)
         # need error handling here
-
 
     else:
         print(f"Error: Invalid path specification: {dset_path}")
         exit()
 
     n = min(n_max, config.num)
-    #print(f"Will use {n} particles")
+    print(f"Will use {n} particles")
+
+    return part_locs, n
+    
+
+def open_part(x, part_locs, ids, dset_path):
+    if dset_path.endswith('.mrcs'):
+        im = part_locs[x]
+        ids.append(f'{x+1}@{dset_path}')
+
+    elif dset_path.endswith('mrc'):
+        # if do_subset_test == True:
+        #     import os
+        #     while True:
+        #         im_path = all_files[x+i]
+        #         im_class = os.path.basename(im_path)
+        #         im_class = int(os.path.splitext(im_class)[0])
+        #         rand = np.random.rand(1)
+        #         if rand > perc and im_class % 2 == 0:
+        #             c0 += 1
+        #             break
+        #         elif rand < perc and im_class % 2 == 1:
+        #             c1 += 1
+        #             break
+        #         else:
+        #             i += 1
+        # else:
+        im_path = part_locs[x]
+        im = load_mrc(im_path)
+        ids.append(f'{im_path}')
+
+    elif dset_path.endswith('star'):
+        im_loc = part_locs[x]
+        (ind, stack_loc) = im_loc.split('@')
+        stack = load_mrc(stack_loc)
+        # if only one im present in stack
+        if stack.ndim == 2:
+            im = stack 
+        else:
+            im = stack[int(ind) - 1]  # Rln stack starts at 1!
+        ids.append(f'{im_loc}')
+
+    return im, ids
+
+def sinogram_main(config, part_locs, n):
 
     ids = []
     do_subset_test = False
@@ -189,41 +232,7 @@ def sinogram_main(config):
     c0 = 0
     c1 = 0
     for x in range(n):
-
-        if dset_path.endswith('.mrcs'):
-            im = classes[x]
-            ids.append(f'{x+1}@{dset_path}')
-        elif dset_path.endswith('mrc'):
-            if do_subset_test == True:
-                # subset test:
-                import os
-                while True:
-                    im_path = all_files[x+i]
-                    im_class = os.path.basename(im_path)
-                    im_class = int(os.path.splitext(im_class)[0])
-                    rand = np.random.rand(1)
-                    if rand > perc and im_class % 2 == 0:
-                        c0 += 1
-                        break
-                    elif rand < perc and im_class % 2 == 1:
-                        c1 += 1
-                        break
-                    else:
-                        i += 1
-            else:
-                    im_path = all_files[x]
-            im = load_mrc(im_path)
-            ids.append(f'{im_path}')
-        elif dset_path.endswith('star'):
-            im_loc = locations[x]
-            (ind, stack_loc) = im_loc.split('@')
-            stack = load_mrc(stack_loc)
-            # if only one im present in stack
-            if stack.ndim == 2:
-                im = stack 
-            else:
-                im = stack[int(ind) - 1]  # Rln stack starts at 1!
-            ids.append(f'{im_loc}')
+        im, ids = open_part(x, part_locs, ids, config.data_set)
 
         if x == 0:  # first pass makes all_sinos
             ds_size = im.shape[0] // config.down_scale

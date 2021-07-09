@@ -10,6 +10,7 @@ displayed.
 '''
 import numpy as np
 from sinogram_input import sinogram_main
+from sinogram_input import get_part_locs
 from dim_red import fitmodel
 from clustering import clustering_main
 import star_writer
@@ -130,7 +131,9 @@ if __name__ == '__main__':
     time_stamp = time.strftime("%Y%m%d-%H%M%S")
     clic_dir = f'CLIC_Job_{time_stamp}'
     os.makedirs(clic_dir, exist_ok = True)
-    all_ims, num, ids = sinogram_main(args)
+
+    part_locs, n = get_part_locs(args)
+    all_ims, num, ids = sinogram_main(args, part_locs, n)
     star_file  = star_writer.create(ids, clic_dir)
     
     args.num = num  # Update with lowest num
