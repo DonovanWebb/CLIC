@@ -234,4 +234,21 @@ def sinogram_main(config):
     if do_subset_test == True:
         print(c0/n, c1/n)
 
+    # """ Derivatives test """
+    # # all_sinos_deriv = np.array([np.array([np.gradient(line) for line in sino]) for sino in all_sinos])
+    # import savitzky_golay as sg
+    # all_sinos_deriv = np.array([np.array(
+    #     [sg.savitzky_golay(line, window_size=5, order=3, deriv=1, rate=1)
+    #                         for line in sino])
+    #                         for sino in all_sinos])
+    
+    # import matplotlib.pyplot as plt
+    # plt.figure("sino")
+    # plt.imshow(all_sinos[0,:,:])
+    # plt.figure("deriv sino")
+    # plt.imshow(all_sinos_deriv[0,:,:])
+    # plt.show()
+    # all_sinos = all_sinos_deriv
+    # """"""
+
     return all_sinos, n, ids
