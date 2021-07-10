@@ -347,7 +347,7 @@ def clustering_main(lines, config, clic_dir, ids):
         scoretable = find_scoretable(cl_dict, cl_labels)  # old method
     # Normalize scoretable
     scoretable = center_sctble(scoretable, config)
-    print(f"sctable time: {(time.time() - timer_sc_tbl)}")
+    # print(f"   sctable time: {(time.time() - timer_sc_tbl)}")
     all_paired = []
     Z = []  # Linkage matrix for drawing dendrogram
     Z_corr = list(range(config.num))
@@ -414,9 +414,11 @@ def clustering_main(lines, config, clic_dir, ids):
         import bin_test
         exp_ids_bin = bin_test.cut(table, z_score_list, z_cut)
         score = score_bins(gt_ids_bin, exp_ids_bin)
-        print(score)
+        print(f"   Batch score: {score}")
 
     plt.savefig(f"{clic_dir}/dendrogram.pdf")
+    if do_bin_test:
+        return exp_ids_bin
 
 
 

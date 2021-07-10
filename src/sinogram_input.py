@@ -184,10 +184,10 @@ def get_part_locs(config):
     return part_locs, n
     
 
-def open_part(x, part_locs, ids, dset_path):
+def open_part(x, part_locs, name_ids, dset_path):
     if dset_path.endswith('.mrcs'):
         im = part_locs[x]
-        ids.append(f'{x+1}@{dset_path}')
+        name_ids.append(f'{x+1}@{dset_path}')
 
     elif dset_path.endswith('mrc'):
         # if do_subset_test == True:
@@ -208,7 +208,7 @@ def open_part(x, part_locs, ids, dset_path):
         # else:
         im_path = part_locs[x]
         im = load_mrc(im_path)
-        ids.append(f'{im_path}')
+        name_ids.append(f'{im_path}')
 
     elif dset_path.endswith('star'):
         im_loc = part_locs[x]
@@ -219,46 +219,23 @@ def open_part(x, part_locs, ids, dset_path):
             im = stack 
         else:
             im = stack[int(ind) - 1]  # Rln stack starts at 1!
-        ids.append(f'{im_loc}')
+        name_ids.append(f'{im_loc}')
 
-    return im, ids
+    return im, name_ids
 
-def sinogram_main(config, part_locs, n):
+def sinogram_main(config, part_locs, subset):
 
-    ids = []
-    do_subset_test = False
-    i = 0  # for subset test
-    perc = 0.8  # for subset test
-    c0 = 0
-    c1 = 0
-    for x in range(n):
-        im, ids = open_part(x, part_locs, ids, config.data_set)
+    name_ids = []
+    subsize = len(subset)
+    for x in range(len(subset)):
+        x_sb = subset[x]
+        im, name_ids = open_part(x_sb, part_locs, name_ids, config.data_set)
 
         if x == 0:  # first pass makes all_sinos
             ds_size = im.shape[0] // config.down_scale
-            all_sinos = np.zeros((n, config.nlines, ds_size))
+            all_sinos = np.zeros((subsize, config.nlines, ds_size))
 
-        sino = pre_process(im, config, x)
+        sino = pre_process(im, config, x_sb)
         all_sinos[x] = sino
 
-    if do_subset_test == True:
-        print(c0/n, c1/n)
-
-    # """ Derivatives test """
-    # # all_sinos_deriv = np.array([np.array([np.gradient(line) for line in sino]) for sino in all_sinos])
-    # import savitzky_golay as sg
-    # all_sinos_deriv = np.array([np.array(
-    #     [sg.savitzky_golay(line, window_size=5, order=3, deriv=1, rate=1)
-    #                         for line in sino])
-    #                         for sino in all_sinos])
-    
-    # import matplotlib.pyplot as plt
-    # plt.figure("sino")
-    # plt.imshow(all_sinos[0,:,:])
-    # plt.figure("deriv sino")
-    # plt.imshow(all_sinos_deriv[0,:,:])
-    # plt.show()
-    # all_sinos = all_sinos_deriv
-    # """"""
-
-    return all_sinos, n, ids
+    return all_sinos, subsize, name_ids
