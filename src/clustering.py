@@ -22,13 +22,15 @@ The clusters prior to a large merge should be analysed further.
 import numpy as np
 from sklearn.metrics.pairwise import euclidean_distances as eucl_dist
 import matplotlib.pyplot as plt
-from scipy.cluster.hierarchy import dendrogram
+from scipy.cluster.hierarchy import dendrogram, fcluster
 import star_writer
 import numba
 from numba import cuda
 import math
 
 import time
+import collections
+from itertools import permutations
 
 
 def debug_p(msg):
@@ -389,7 +391,6 @@ def clustering_main(lines, config, clic_dir, ids):
     np.save(f"{clic_dir}/dendrogram", Z)
     fig = plt.figure(figsize=(25, 10))
     dn = dendrogram(Z)
-    np.save(f"{clic_dir}/dendrogram", Z)
 
     ax = plt.gca()
 
@@ -399,7 +400,7 @@ def clustering_main(lines, config, clic_dir, ids):
         xlbls = ax.get_xmajorticklabels()
         ### Check for binary simualted data ###
         ids_ints = ids_to_int(ids)
-        gt_ids_bin = [x % 2 for x in ids_ints]
+        gt_ids_bin = [x % 4 for x in ids_ints]
         for lbl in xlbls:
             if gt_ids_bin[int(lbl.get_text())] == 0:
                 lbl.set_color('r')
@@ -407,36 +408,57 @@ def clustering_main(lines, config, clic_dir, ids):
                 lbl.set_color('b')
 
         # Perform cut on binary
-        merge_score = [min(x[1]) for x in large_merges]
-        bin_merge_ind = merge_score.index(max(merge_score))
-        bin_merge = large_merges[bin_merge_ind]
-        z_cut = bin_merge[2]*0.999  # must go below last merge
-        import bin_test
-        exp_ids_bin = bin_test.cut(table, z_score_list, z_cut)
-        score = score_bins(gt_ids_bin, exp_ids_bin)
+        # merge_score = [min(x[1]) for x in large_merges]  # size of merges
+        # bin_merge_ind = merge_score.index(max(merge_score)) # largest merge
+        # bin_merge = large_merges[bin_merge_ind]
+        # z_cut = bin_merge[2]*0.999  # must go below last merge
+        # import bin_test
+        # exp_ids_bin = bin_test.cut(table, z_score_list, z_cut)
+        # score = score_bins(gt_ids_bin, exp_ids_bin)
+        #auto_cl = fcluster(Z, t=num_clusters, criterion='maxclust') - 1
+        current_cl = -1
+        t = 1
+        runs = 0
+        num_clusters = config.num_clusters
+        while current_cl != num_clusters:
+            if runs > 100:
+                print("Cannot exclude anomalies, Look at clustering of dendrogram")
+                auto_cl = fcluster(Z, t=num_clusters, criterion='maxclust') - 1
+                continue
+            elif current_cl > num_clusters or current_cl == 0:
+                t = 1.1 * t
+            elif current_cl < num_clusters:
+                t = 0.95 * t
+            auto_cl = fcluster(Z, t=t, criterion='distance') - 1
+            cl_freq = collections.Counter(auto_cl)
+            current_cl = sum([1 if cl_freq[cl] > int(0.05*config.num) else 0 for cl in cl_freq])
+            runs += 1
+        score = score_bins(gt_ids_bin, auto_cl, config)
         print(f"   Batch score: {score}")
 
     plt.savefig(f"{clic_dir}/dendrogram.pdf")
     if do_bin_test:
-        return exp_ids_bin
+        return auto_cl
 
 
 
-def score_bins(gt, exp):
+def score_bins(gt, exp, config):
+    num_clusters = config.num_clusters
+    perm = permutations(range(num_clusters))
     assert(len(gt) == len(exp))
-    # case 1: gt and exp assigned the same
-    score1 = 0
-    score2 = 0
-    score_no_class = 0
-    for i in range(len(gt)):
-        if gt[i] == exp[i]:
-            score1 += 1
-        # case 2: gt and exp assigned opp
-        if gt[i] + exp[i] == 1:
-            score2 += 1
-        if exp[i] == -1:
-            score_no_class += 1
-    return (max(score1, score2)/len(gt), score_no_class/len(gt))
+    scores = []
+    for p in perm:
+        score = 0
+        score_no_class = 0
+        for i in range(len(gt)):
+            unshift_c = gt[i]
+            shift_c = p[unshift_c]
+            if shift_c == exp[i]:
+                score += 1
+            if exp[i] == -1:
+                score_no_class += 1
+        scores.append(score)
+    return (max(scores)/len(gt), score_no_class/len(gt))
 
 
 def ids_to_int(ids):

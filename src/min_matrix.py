@@ -19,11 +19,9 @@ def make_slice(lin_batch, batch_ids, BAC):
     for i in range(len(lin_batch)):
         i_class = lin_batch[i]
         g_id = batch_ids[i]
-        if i_class == 0:
-            batch[g_id, 0] = 1
-
-        elif i_class == 1:
-            batch[g_id, 1] = 1
+        for c in range(C):
+            if i_class == c:
+                batch[g_id, c] = 1
     
     return batch
 
@@ -33,7 +31,10 @@ def make_line(al_matrix):
     lin_matrix = []
     for g_id in range(A):
         scores = [sum(al_matrix[: ,g_id, c]) for c in range(C)]
-        lin_matrix.append(np.argmax(scores))
+        if max(scores) == 0:
+            lin_matrix.append(-1)
+        else:
+            lin_matrix.append(np.argmax(scores))
     
     return lin_matrix
 

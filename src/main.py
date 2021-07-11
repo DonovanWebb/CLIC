@@ -26,11 +26,16 @@ from skimage.transform import radon, resize
 import mrcfile
 from sklearn.metrics.pairwise import euclidean_distances as eucl_dist
 import matplotlib.pyplot as plt
-from scipy.cluster.hierarchy import dendrogram
+from scipy.cluster.hierarchy import dendrogram, fcluster
 import time
 import gemmi
 import os
 import random
+from itertools import permutations
+import numba
+from numba import cuda
+import math
+import collections
 
 import sys
 
@@ -72,6 +77,9 @@ parser.add_argument("-g", "--gpu", help=t, default=False, action='store_true')
 
 t = ''' Batchsize '''
 parser.add_argument("-b", "--batch_size", help=t, default=-1, type=int)
+
+t = ''' Number of clusters '''
+parser.add_argument("-k", "--num_clusters", help=t, default=2, type=int)
 
 args = parser.parse_args()
 
@@ -170,7 +178,7 @@ if __name__ == '__main__':
 
     all_name_ids = []
     b = 0
-    matrix = np.zeros((len(batches), n, 2))
+    matrix = np.zeros((len(batches), n, args.num_clusters))
     for batch in batches:
         start_batch = time.time()
         batch_dir = f'CLIC_Job_{time_stamp}/batch_{b}'
@@ -191,7 +199,7 @@ if __name__ == '__main__':
         #pca_recon.plt_comps(model)
         #plt.show()
 
-        plot(lines_reddim, args.num, clic_dir, name_ids)
+        # plot(lines_reddim, args.num, clic_dir, name_ids)
 
         '''
         """
@@ -218,9 +226,9 @@ if __name__ == '__main__':
     all_classes = min_matrix.make_line(aligned_matrix)
     # Score classes
     ids_ints = clustering.ids_to_int(all_name_ids)
-    gt_ids_bin = [x % 2 for x in ids_ints]
+    gt_ids_bin = [x % 4 for x in ids_ints]
     np.save("gt_ids_bin.npy", gt_ids_bin)
-    score = clustering.score_bins(gt_ids_bin, all_classes)
+    score = clustering.score_bins(gt_ids_bin, all_classes, args)
     print(f"Total_score: {score}")
 
     print(f"Total time: {time.time() - start:.2f}s")

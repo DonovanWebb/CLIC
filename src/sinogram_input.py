@@ -166,6 +166,7 @@ def get_part_locs(config):
         if part_locs == []:
             print(f"Error: No mrc found in: {dset_path}")
             exit()
+        part_locs = [f"{dset_path[:-5]}{x}.mrc" for x in range(n_max)]
     elif dset_path.endswith('star'):
         # read star file to extract im locs
         starfile = gemmi.cif.read_file(dset_path)
