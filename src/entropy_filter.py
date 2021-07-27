@@ -6,6 +6,9 @@ from skimage import data
 from skimage.util import img_as_ubyte
 from skimage.filters.rank import entropy
 from skimage.morphology import disk
+from skimage.segmentation import watershed
+from scipy import ndimage as ndi
+from skimage.feature import peak_local_max
 import mrcfile as mrc
 import cv2
 import imageio
@@ -43,11 +46,12 @@ def knee_thresh(entr_im):
     inv_norm = ordered_flat[-1] - ordered_flat[0]
     norm_thresh = kn.x_difference[np.argmax(kn.y_difference)]
     thresh = ordered_flat[0] + norm_thresh*inv_norm
-    # plt.figure("knee")
-    # plt.plot(ordered_flat, range(tot_area))
-    # plt.xlabel("Entropy")
-    # plt.ylabel("Cumulative frequency")
-    # plt.plot([thresh]*2, [0, tot_area], c='r')
+    plt.figure("knee")
+    plt.plot(ordered_flat, range(tot_area))
+    plt.xlabel("Entropy")
+    plt.ylabel("Cumulative frequency")
+    plt.plot([thresh]*2, [0, tot_area], c='r')
+    plt.savefig(f'knee.png', bbox_inches='tight')
     return thresh
 
 
@@ -75,16 +79,43 @@ def add_noise(image, snr=1):  # Try colored noise and shot noise
 
 
 def post_process_mask(thresh_im):
-    small = int(thresh_im.shape[0] * 0.05)
-    big = int(thresh_im.shape[0] * 0.1)
+    small = int(thresh_im.shape[0] * 0.025)
+    big = int(thresh_im.shape[0] * 0.05)
     kernelSmall = np.ones((small, small), np.uint8)
     kernelBig = np.ones((big, big), np.uint8)
-    dilation = cv2.dilate(thresh_im, kernelSmall, iterations=1)
-    opening = cv2.morphologyEx(dilation, cv2.MORPH_OPEN, kernelBig)
-    closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, kernelSmall)
-    return closing
+    # opening = cv2.morphologyEx(thresh_im, cv2.MORPH_OPEN, kernelSmall)
+    # dilation = cv2.dilate(opening, kernelBig, iterations=1)
+    # closing = cv2.morphologyEx(dilation, cv2.MORPH_CLOSE, kernelSmall)
+    dilation = cv2.dilate(thresh_im, kernelSmall, iterations=10)
+    thresh = dilation.astype(np.uint8)
+    _, contours, hierarchy = cv2.findContours(thresh, 
+        cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
+    # remove if cont too large or too small
+    # To Do
+    cont_size = np.array([cv2.contourArea(c) for c in contours])
 
+    # central contour:
+    mid_pnts = np.array([np.array([sum(c[:,:,0]), sum(c[:,:,1])]) / len(c) for c in contours])
+    from_cent = np.array([np.sqrt((p[0] - thresh_im.shape[0]/2)**2 + (p[1]-thresh_im.shape[0]/2)**2) for p in mid_pnts])
+    cent_cont = contours[np.argmin(from_cent)]
+    mask = np.zeros_like(thresh_im)
+    #mask = cv2.fillPoly(mask, cent_cont, 1)
+    mask = cv2.drawContours(mask, [cent_cont], 0, (255), cv2.FILLED)
+
+    return mask
+
+def watershed_m(image):
+    # Now we want to separate the two objects in image
+    # Generate the markers as local maxima of the distance to the background
+    distance = ndi.distance_transform_edt(image)
+    coords = peak_local_max(distance, footprint=np.ones((3, 3)), labels=image)
+    mask = np.zeros(distance.shape, dtype=bool)
+    mask[tuple(coords.T)] = True
+    markers, _ = ndi.label(mask)
+    labels = watershed(-distance, markers, mask=image)
+    return labels
+    
 def main(im_orig, noise=-1):
     dim = im_orig.shape[0]
     #im_orig = cv2.resize(im_orig, (dim // 4, dim // 4))
@@ -92,7 +123,7 @@ def main(im_orig, noise=-1):
     image = add_noise(im_orig, noise)
     maxpix = max(image.max(), -1*image.min())
     image = image/maxpix
-    disk_size = int(image.shape[0] * 0.15)
+    disk_size = int(image.shape[0] * 0.175)
     entr_im = entropy(image, disk(disk_size))
 
     #thresh = calc_thresh(entr_im)
@@ -113,25 +144,27 @@ def main(im_orig, noise=-1):
     # ax3.set_xlabel("Thresholded entropy")
     # fig.tight_layout()
 
-    closing = post_process_mask(thresh_im)
+    mask = post_process_mask(thresh_im)
+    # mask_water = watershed_m(mask)
     average = cv2.mean(im_orig)[0]
-    masked = np.multiply(im_orig, closing/255)
+    masked = np.multiply(im_orig, mask/255)
     # masked[masked == 0] = average
 
-    # fig, ((ax0, ax1), (ax2, ax3)) = plt.subplots(2, 2)
+    fig, ((ax0, ax1), (ax2, ax3)) = plt.subplots(2, 2)
 
-    # ax0.imshow(im_orig, cmap='gray')
-    # ax0.set_xlabel("Clean image")
+    ax0.imshow(im_orig, cmap='gray')
+    ax0.set_xlabel("Clean image")
 
-    # ax1.imshow(image, cmap='gray')
-    # ax1.set_xlabel("Noisy image")
+    ax1.imshow(image, cmap='jet')
+    ax1.set_xlabel("Noisy image")
 
-    # ax2.imshow(entr_im, cmap='viridis')
-    # ax2.set_xlabel("Local entropy")
+    ax2.imshow(entr_im, cmap='viridis')
+    ax2.set_xlabel("Local entropy")
 
-    # ax3.imshow(masked, cmap='gray')
-    # ax3.imshow(closing, alpha=0.2, cmap='inferno_r')
-    # ax3.set_xlabel("Thresholded entropy")
+    ax3.imshow(masked, cmap='gray')
+    ax3.imshow(mask, alpha=0.2, cmap='inferno_r')
+    ax3.set_xlabel("Thresholded entropy")
+    plt.savefig(f'entr_masking{np.random.randint(10)}.png', bbox_inches='tight')
 
     # plt.show()
     return masked

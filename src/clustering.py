@@ -394,7 +394,7 @@ def clustering_main(lines, config, clic_dir, ids):
 
     ax = plt.gca()
 
-    do_bin_test = True
+    do_bin_test = False
     if do_bin_test:
         # Add color to dendro labels
         xlbls = ax.get_xmajorticklabels()
@@ -416,6 +416,7 @@ def clustering_main(lines, config, clic_dir, ids):
         # exp_ids_bin = bin_test.cut(table, z_score_list, z_cut)
         # score = score_bins(gt_ids_bin, exp_ids_bin)
         #auto_cl = fcluster(Z, t=num_clusters, criterion='maxclust') - 1
+    if config.num_clusters != -1:
         current_cl = -1
         t = 1
         runs = 0
@@ -433,12 +434,15 @@ def clustering_main(lines, config, clic_dir, ids):
             cl_freq = collections.Counter(auto_cl)
             current_cl = sum([1 if cl_freq[cl] > int(0.05*config.num) else 0 for cl in cl_freq])
             runs += 1
+
+    if do_bin_test:
         score = score_bins(gt_ids_bin, auto_cl, config)
         print(f"   Batch score: {score}")
 
     plt.savefig(f"{clic_dir}/dendrogram.pdf")
-    if do_bin_test:
+    if config.num_clusters != -1:
         return auto_cl
+
 
 
 

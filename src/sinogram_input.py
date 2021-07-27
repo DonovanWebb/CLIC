@@ -123,10 +123,15 @@ def pre_process(im, config, n):
         plt.axis('off')  # just for figure
         plt.savefig('clean_sino.png', bbox_inches='tight')
     """
+    # import matplotlib.pyplot as plt
+    # plt.figure('raw_im')
+    # plt.imshow(im, cmap='gray')
+    # plt.axis('off')
+    # plt.savefig(f'raw_im{n}.png', bbox_inches='tight')
     if config.snr != -1:
         im = add_noise(im, config.snr)
     im = downscale(im, config.down_scale)
-    im = stand_image(im)
+    # im = stand_image(im)
     # im = circular_mask(im)
     im = entropy_filter.main(im)
     # optional displaying (for debug)
@@ -134,6 +139,7 @@ def pre_process(im, config, n):
     # plt.figure('masked_im')
     # plt.imshow(im, cmap='gray')
     # plt.axis('off')
+    # plt.savefig(f'masked_im{n}.png', bbox_inches='tight')
     # plt.show()
     """
     if n == config.num - 1:
@@ -185,7 +191,7 @@ def get_part_locs(config):
     return part_locs, n
     
 
-def open_part(x, part_locs, name_ids, dset_path):
+def open_part(x, part_locs, name_ids, dset_path, stacks={}):
     if dset_path.endswith('.mrcs'):
         im = part_locs[x]
         name_ids.append(f'{x+1}@{dset_path}')
@@ -214,7 +220,11 @@ def open_part(x, part_locs, name_ids, dset_path):
     elif dset_path.endswith('star'):
         im_loc = part_locs[x]
         (ind, stack_loc) = im_loc.split('@')
-        stack = load_mrc(stack_loc)
+        if stack_loc in stacks:
+            stack = stacks[stack_loc]
+        else:
+            stack = load_mrc(stack_loc)
+            stacks[stack_loc] = stack
         # if only one im present in stack
         if stack.ndim == 2:
             im = stack 
@@ -222,7 +232,7 @@ def open_part(x, part_locs, name_ids, dset_path):
             im = stack[int(ind) - 1]  # Rln stack starts at 1!
         name_ids.append(f'{im_loc}')
 
-    return im, name_ids
+    return im, name_ids, stacks
 
 def sinogram_main(config, part_locs, subset):
 
@@ -230,7 +240,7 @@ def sinogram_main(config, part_locs, subset):
     subsize = len(subset)
     for x in range(len(subset)):
         x_sb = subset[x]
-        im, name_ids = open_part(x_sb, part_locs, name_ids, config.data_set)
+        im, name_ids, stacks = open_part(x_sb, part_locs, name_ids, config.data_set)
 
         if x == 0:  # first pass makes all_sinos
             ds_size = im.shape[0] // config.down_scale
