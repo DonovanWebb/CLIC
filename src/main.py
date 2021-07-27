@@ -221,7 +221,7 @@ if __name__ == '__main__':
         matrix[b] = min_matrix.make_slice(batch_classes, batch, matrix.shape)
         print(f"   Batch time: {time.time() - start_batch:.2f}s")
         b += 1
-    np.save("matrix.npy", matrix)
+    np.save(f"{clic_dir}matrix.npy", matrix)
     aligned_matrix = min_matrix.align_batches(matrix)
     all_classes = min_matrix.make_line(aligned_matrix)
     # Score classes

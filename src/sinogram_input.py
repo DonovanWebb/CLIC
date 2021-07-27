@@ -123,14 +123,15 @@ def pre_process(im, config, n):
         plt.axis('off')  # just for figure
         plt.savefig('clean_sino.png', bbox_inches='tight')
     """
-    # import matplotlib.pyplot as plt
-    # plt.figure('raw_im')
-    # plt.imshow(im, cmap='gray')
-    # plt.axis('off')
     # plt.savefig(f'raw_im{n}.png', bbox_inches='tight')
     if config.snr != -1:
         im = add_noise(im, config.snr)
     im = downscale(im, config.down_scale)
+    # import matplotlib.pyplot as plt
+    # plt.figure('raw_im')
+    # plt.imshow(im, cmap='gray')
+    # plt.axis('off')
+    # plt.show()
     # im = stand_image(im)
     # im = circular_mask(im)
     im = entropy_filter.main(im)

@@ -46,12 +46,12 @@ def knee_thresh(entr_im):
     inv_norm = ordered_flat[-1] - ordered_flat[0]
     norm_thresh = kn.x_difference[np.argmax(kn.y_difference)]
     thresh = ordered_flat[0] + norm_thresh*inv_norm
-    plt.figure("knee")
-    plt.plot(ordered_flat, range(tot_area))
-    plt.xlabel("Entropy")
-    plt.ylabel("Cumulative frequency")
-    plt.plot([thresh]*2, [0, tot_area], c='r')
-    plt.savefig(f'knee.png', bbox_inches='tight')
+    # plt.figure("knee")
+    # plt.plot(ordered_flat, range(tot_area))
+    # plt.xlabel("Entropy")
+    # plt.ylabel("Cumulative frequency")
+    # plt.plot([thresh]*2, [0, tot_area], c='r')
+    # plt.savefig(f'knee.png', bbox_inches='tight')
     return thresh
 
 
@@ -61,8 +61,7 @@ def calc_thresh(entr_im, mask_perc=0.7):
     mask_area = tot_area * mask_perc
     ordered_flat = np.sort(flat_im)
     thresh = ordered_flat[int(np.ceil(mask_area))]
-    print(thresh)
-    plt.plot(ordered_flat, range(tot_area))
+    # plt.plot(ordered_flat, range(tot_area))
     return thresh
 
 
@@ -150,21 +149,21 @@ def main(im_orig, noise=-1):
     masked = np.multiply(im_orig, mask/255)
     # masked[masked == 0] = average
 
-    fig, ((ax0, ax1), (ax2, ax3)) = plt.subplots(2, 2)
+    # fig, ((ax0, ax1), (ax2, ax3)) = plt.subplots(2, 2)
 
-    ax0.imshow(im_orig, cmap='gray')
-    ax0.set_xlabel("Clean image")
+    # ax0.imshow(im_orig, cmap='gray')
+    # ax0.set_xlabel("Clean image")
 
-    ax1.imshow(image, cmap='jet')
-    ax1.set_xlabel("Noisy image")
+    # ax1.imshow(image, cmap='gray')
+    # ax1.set_xlabel("Noisy image")
 
-    ax2.imshow(entr_im, cmap='viridis')
-    ax2.set_xlabel("Local entropy")
+    # ax2.imshow(entr_im, cmap='viridis')
+    # ax2.set_xlabel("Local entropy")
 
-    ax3.imshow(masked, cmap='gray')
-    ax3.imshow(mask, alpha=0.2, cmap='inferno_r')
-    ax3.set_xlabel("Thresholded entropy")
-    plt.savefig(f'entr_masking{np.random.randint(10)}.png', bbox_inches='tight')
+    # ax3.imshow(masked, cmap='gray')
+    # ax3.imshow(mask, alpha=0.2, cmap='inferno_r')
+    # ax3.set_xlabel("Thresholded entropy")
+    # plt.savefig(f'entr_masking{np.random.randint(10)}.png', bbox_inches='tight')
 
     # plt.show()
     return masked

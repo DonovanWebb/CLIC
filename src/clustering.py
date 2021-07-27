@@ -425,6 +425,7 @@ def clustering_main(lines, config, clic_dir, ids):
             if runs > 100:
                 print("Cannot exclude anomalies, Look at clustering of dendrogram")
                 auto_cl = fcluster(Z, t=num_clusters, criterion='maxclust') - 1
+                current_cl = num_clusters
                 continue
             elif current_cl > num_clusters or current_cl == 0:
                 t = 1.1 * t
