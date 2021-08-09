@@ -15,9 +15,11 @@ they will now all be contained in C4.
 This iterates until all points are contained within one cluster - C1.
 
 At each merging we get an output of which cluster each sinogram belongs to.
-Large merges are points of interest and so this is printed at the end of the
+Large merges are points of interest and so this is saved at the end of the
 program.
 The clusters prior to a large merge should be analysed further.
+A dendrogram is made to display clustering.
+Dendrogram is cut to produce clusters.
 """
 import numpy as np
 from sklearn.metrics.pairwise import euclidean_distances as eucl_dist
@@ -31,11 +33,6 @@ import math
 import time
 import collections
 from itertools import permutations
-
-
-def debug_p(msg):
-    pass
-    # print(msg)
 
 
 def initial_dict(lines, num):
@@ -73,6 +70,7 @@ def cap_cluster(cl):
         cl = cl[rand_selection]
     return cl
 
+
 def find_score(clX, clY, name):
     ''' find score between two clusters '''
     clX = cap_cluster(clX)
@@ -97,7 +95,6 @@ def find_score(clX, clY, name):
     #dists = (1/(paired_dists))
     # plot_hist(dists, name)
     score = np.mean(dists)
-    debug_p(f'Score: {score}')
     return score
 
 
@@ -186,7 +183,6 @@ def update_clusterlabels(cluster_labels, p0, p1):
     cluster_labels.remove(p0)
     cluster_labels.remove(p1)
     cluster_labels.append(p0)
-    debug_p(f'after merge {cluster_labels}')
     return cluster_labels
 
 
@@ -248,8 +244,6 @@ def update_cl(cluster_dict, scoretable, cluster_labels, Z, Z_corr):
         b = b[0]
 
     paired = (cluster_labels[int(a)], cluster_labels[int(b)])
-    debug_p(f'paired arg{(a, b)}')
-    debug_p(f'paired {paired}')
     p0 = np.min(paired)  # By convention new group name is lowest of two
     p1 = np.max(paired)
 
@@ -270,7 +264,6 @@ def update_cl(cluster_dict, scoretable, cluster_labels, Z, Z_corr):
     #                            cluster_labels, scoretable)
     # ## 
 
-    debug_p(f'{(scoretable*100).astype(int)}')
 
     # Dendrogram update
     Z.append([Z_corr[p0], Z_corr[p1], 1/score, 0])

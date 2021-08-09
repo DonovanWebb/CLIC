@@ -2,7 +2,7 @@
 input: Config from main.py
 output: matrix containing sinograms from given dataset
 
-This script loads projections, adds noise, masks, makes sinograms
+This script loads projections, adds noise and translation (for testing), masks, makes sinograms
 """
 import numpy as np
 from skimage.transform import radon, resize
@@ -13,38 +13,6 @@ import random
 import cv2
 
 
-'''
-Example dsets and locations...
-dsets = {'NN': '3Drepro/Radon/NN/proj_5angles/all/',
-            'all': 'mvs/protein/all/',
-            'noise': 'mvs/protein/all_noise/',
-            'no e': 'mvs/protein/no_e/',
-            'mixed': 'mvs/protein/mixed/',
-            'mixed4': 'mvs/protein/mixed4/',
-            'mixedLarge': 'mvs/protein/mixedLarge/',
-            'mixedOff1': 'mvs/protein/offset/off1/',
-            'mixedOff2': 'mvs/protein/offset/off2/',
-            'mixedOff4': 'mvs/protein/offset/off4/',
-            'mixedOff8': 'mvs/protein/offset/off8/',
-            'ctfcor': 'mvs/protein/CTFYuriy/ctf_corrected/separated/',
-            'tempall': 'mvs/recon/temp_for_slides/all/',
-            'tempno_e': 'mvs/recon/temp_for_slides/no_e/',
-            'tempmixed': 'mvs/recon/temp_for_slides/mixed/',
-            'testlocal': '/home/lexi/Documents/Diamond/CLIC/test_data/mixed/',
-            'SLICEM': '/home/lexi/Documents/Diamond/CLIC/CLIC_exp/SLICEM_exp/mixture_2D.mrcs',
-            'exp_local': '/home/lexi/Documents/Diamond/CLIC/CLIC_refac/exp_plan/7_5_projs/',
-            'JFrank': 'CLIC/dsets/simulated/JFrank/particles/',
-            'JFrank1': 'CLIC/dsets/simulated/JFrank/particles1/',
-            'JFrank2': 'CLIC/dsets/simulated/JFrank/particles2/',
-            'JFrank3': 'CLIC/dsets/simulated/JFrank/particles3/',
-            'JFrankd23': 'CLIC/dsets/simulated/JFrank/particlesd23/',
-            'JFrankd41k': 'CLIC/dsets/simulated/JFrank/particlesd41k/',
-            'fact': 'CLIC/dsets/real/fact/',
-            'factmixed': 'CLIC/dsets/real/factmixed/',
-            'exp_plan': 'CLIC/dsets/exp_plan/7_5_projs/'}
-'''
-
-
 def load_mrc(path):
     with mrcfile.open(path) as f:
         image = f.data
@@ -53,7 +21,6 @@ def load_mrc(path):
 
 def stand_image(image):
     image_stand = (image - np.mean(image))/np.std(image)
-
     return image_stand
 
 
@@ -72,11 +39,6 @@ def add_trans(image, trans=0.05):
     dims = tuple(image.shape)
     shift = np.random.normal(0, trans*dims[0])
     direction = random.randrange(1, 90) * 2 * np.pi / 360
-
-    # input_pts = np.float32([[0,0], [cols-1,0], [0,rows-1]])
-    # output_pts = np.float32([[shift*np.cos(direction),shift*np.sin(direction)], [cols-1,0], [cols-1,rows-1]])
-    # # Calculate the transformation matrix using cv2.getAffineTransform()
-    # M= cv2.getAffineTransform(input_pts , output_pts)
     M = np.float32([[1, 0, shift*np.cos(direction)],
         [0, 1, shift*np.sin(direction)]])
     trans_image = cv2.warpAffine(image, M, dims)
@@ -126,37 +88,16 @@ def gblur(im):
 
 
 def pre_process(im, config, n):
-    """
-    if n == config.num - 1:
-        #im = stand_image(im)
-        import matplotlib.pyplot as plt  # just for figure
-        plt.figure("original image")  # just for figure
-        plt.imshow(im, "gray")  # just for figure
-        plt.axis('off')  # just for figure
-        plt.savefig('clean_im.png', bbox_inches='tight')
-        im_ds = downscale(im, config.down_scale)  # just for figure
-        sino_clean = make_sinogram(np.array(im_ds), config.nlines)  # just for figure
-        plt.figure("clean sinogram")  # just for figure
-        plt.imshow(sino_clean, "gray")  # just for figure
-        plt.axis('off')  # just for figure
-        plt.savefig('clean_sino.png', bbox_inches='tight')
-    """
-    # plt.savefig(f'raw_im{n}.png', bbox_inches='tight')
-    # import matplotlib.pyplot as plt
-    # plt.figure('raw_im')
-    # plt.imshow(im, cmap='gray')
-    # plt.axis('off')
-    im = add_trans(im)
-    # plt.figure('trans_im')
-    # plt.imshow(im, cmap='gray')
-    # plt.axis('off')
-    # plt.show()
-    if config.snr != -1:
+    #im = add_trans(im)  # for testing
+    if config.snr != -1:  # for testing
         im = add_noise(im, config.snr)
     im = downscale(im, config.down_scale)
     im = stand_image(im)
-    # im = circular_mask(im)
-    im = entropy_filter.main(im)
+
+    # masks: circular default. Been testing entropy filter
+    im = circular_mask(im)
+    # im = entropy_filter.main(im)
+
     # optional displaying (for debug)
     # import matplotlib.pyplot as plt
     # plt.figure('masked_im')
@@ -164,20 +105,8 @@ def pre_process(im, config, n):
     # plt.axis('off')
     # plt.savefig(f'masked_im{n}.png', bbox_inches='tight')
     # plt.show()
-    """
-    if n == config.num - 1:
-        plt.figure("noisy image")  # just for figure
-        plt.imshow(im, "gray")  # just for figure
-        plt.axis('off')
-        plt.savefig(f'snr{config.snr}_im.png', bbox_inches='tight')
-    """
+
     sino = make_sinogram(im, config.nlines)
-    '''
-    import matplotlib.pyplot as plt
-    plt.imshow(sino, cmap='gray')
-    plt.axis('off')
-    plt.show()
-    '''
     return sino
 
 
@@ -220,22 +149,6 @@ def open_part(x, part_locs, name_ids, dset_path, stacks={}):
         name_ids.append(f'{x+1}@{dset_path}')
 
     elif dset_path.endswith('mrc'):
-        # if do_subset_test == True:
-        #     import os
-        #     while True:
-        #         im_path = all_files[x+i]
-        #         im_class = os.path.basename(im_path)
-        #         im_class = int(os.path.splitext(im_class)[0])
-        #         rand = np.random.rand(1)
-        #         if rand > perc and im_class % 2 == 0:
-        #             c0 += 1
-        #             break
-        #         elif rand < perc and im_class % 2 == 1:
-        #             c1 += 1
-        #             break
-        #         else:
-        #             i += 1
-        # else:
         im_path = part_locs[x]
         im = load_mrc(im_path)
         name_ids.append(f'{im_path}')
