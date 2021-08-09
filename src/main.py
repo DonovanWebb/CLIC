@@ -6,6 +6,8 @@ the bottom of the file.
 
 Results: A dendrogram of each batch is made.  Output of star files
 with each particle assigned to a cluster.
+
+Donovan Webb & Yuriy Chaban
 '''
 import numpy as np
 from sinogram_input import sinogram_main

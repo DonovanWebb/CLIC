@@ -1,4 +1,5 @@
 CLIC - Common Line Implied Clustering
+Donovan Webb & Yuriy Chaban
 
 Clustering procedure based off of 3D heterogeneity of particle
 projections based off of the common line theorem.
