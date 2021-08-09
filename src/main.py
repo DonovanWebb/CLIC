@@ -225,10 +225,10 @@ if __name__ == '__main__':
     aligned_matrix = min_matrix.align_batches(matrix)
     all_classes = min_matrix.make_line(aligned_matrix)
     # Score classes
-    binary_test = False
+    binary_test = True
     if binary_test == True:
 	    ids_ints = clustering.ids_to_int(all_name_ids)
-	    gt_ids_bin = [x % 4 for x in ids_ints]
+	    gt_ids_bin = [x % args.num_clusters for x in ids_ints]
 	    np.save("gt_ids_bin.npy", gt_ids_bin)
 	    score = clustering.score_bins(gt_ids_bin, all_classes, args)
 	    print(f"Total_score: {score}")

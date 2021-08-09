@@ -87,7 +87,9 @@ def post_process_mask(thresh_im):
     # closing = cv2.morphologyEx(dilation, cv2.MORPH_CLOSE, kernelSmall)
     dilation = cv2.dilate(thresh_im, kernelSmall, iterations=10)
     thresh = dilation.astype(np.uint8)
-    _, contours, hierarchy = cv2.findContours(thresh, 
+    # _, contours, hierarchy = cv2.findContours(thresh, 
+    #     cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    contours, hierarchy = cv2.findContours(thresh, 
         cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
     # remove if cont too large or too small

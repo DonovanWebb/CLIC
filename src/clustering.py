@@ -394,13 +394,13 @@ def clustering_main(lines, config, clic_dir, ids):
 
     ax = plt.gca()
 
-    do_bin_test = False
+    do_bin_test = True
     if do_bin_test:
         # Add color to dendro labels
         xlbls = ax.get_xmajorticklabels()
         ### Check for binary simualted data ###
         ids_ints = ids_to_int(ids)
-        gt_ids_bin = [x % 4 for x in ids_ints]
+        gt_ids_bin = [x % config.num_clusters for x in ids_ints]
         for lbl in xlbls:
             if gt_ids_bin[int(lbl.get_text())] == 0:
                 lbl.set_color('r')

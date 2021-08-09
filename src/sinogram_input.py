@@ -9,6 +9,8 @@ from skimage.transform import radon, resize
 import mrcfile
 import gemmi
 import entropy_filter
+import random
+import cv2
 
 
 '''
@@ -63,6 +65,22 @@ def add_noise(image, snr=1):  # Try colored noise and shot noise
     noise = np.random.normal(mean, sigma, dims)
     noisy_image = image + noise
     return noisy_image
+
+
+def add_trans(image, trans=0.05):
+    ''' Translate the image '''
+    dims = tuple(image.shape)
+    shift = np.random.normal(0, trans*dims[0])
+    direction = random.randrange(1, 90) * 2 * np.pi / 360
+
+    # input_pts = np.float32([[0,0], [cols-1,0], [0,rows-1]])
+    # output_pts = np.float32([[shift*np.cos(direction),shift*np.sin(direction)], [cols-1,0], [cols-1,rows-1]])
+    # # Calculate the transformation matrix using cv2.getAffineTransform()
+    # M= cv2.getAffineTransform(input_pts , output_pts)
+    M = np.float32([[1, 0, shift*np.cos(direction)],
+        [0, 1, shift*np.sin(direction)]])
+    trans_image = cv2.warpAffine(image, M, dims)
+    return trans_image
 
 
 def downscale(image, ds):
@@ -124,15 +142,19 @@ def pre_process(im, config, n):
         plt.savefig('clean_sino.png', bbox_inches='tight')
     """
     # plt.savefig(f'raw_im{n}.png', bbox_inches='tight')
-    if config.snr != -1:
-        im = add_noise(im, config.snr)
-    im = downscale(im, config.down_scale)
     # import matplotlib.pyplot as plt
     # plt.figure('raw_im')
     # plt.imshow(im, cmap='gray')
     # plt.axis('off')
+    im = add_trans(im)
+    # plt.figure('trans_im')
+    # plt.imshow(im, cmap='gray')
+    # plt.axis('off')
     # plt.show()
-    # im = stand_image(im)
+    if config.snr != -1:
+        im = add_noise(im, config.snr)
+    im = downscale(im, config.down_scale)
+    im = stand_image(im)
     # im = circular_mask(im)
     im = entropy_filter.main(im)
     # optional displaying (for debug)
